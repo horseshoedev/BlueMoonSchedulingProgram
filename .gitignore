@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw? 
+
+#Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.swo
+*.pid
+*.seed
+*.pid.lock
+*.log
+*.cache

@@ -2,6 +2,12 @@
 
 A modern, responsive availability scheduling application built with React, TypeScript, and Tailwind CSS.
 
+## Screenshots
+
+<img src="images/Screenshot.png" alt="Screenshot" width="200" height="150">
+
+<img src="images/Screenshot_darkmode.png" alt="Screenshot dark mode" width="200" height="150">
+
 ## Features
 
 - **Dashboard**: Overview of availability statistics and quick actions
