@@ -12,8 +12,8 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center">
           <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mr-3 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">🌙</span>
-          </div>
+  <img src="/images/favicon/ms-icon-310x310.png" alt="Blue Moon Icon" className="w-full h-full object-cover rounded-full" />
+</div>
           <h1 className={`text-xl font-bold ${currentTheme.text}`}>Blue Moon</h1>
         </div>
         <div className="flex items-center space-x-4">
