@@ -16,7 +16,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className={`w-full lg:w-64 space-y-2 ${currentTheme.sidebar} p-4 rounded-lg`}>
+    <div className={`w-64 min-w-64 h-full space-y-2 ${currentTheme.sidebar} p-4 rounded-lg`}>
       {navItems.map(({ key, label, icon }) => (
         <button
           key={key}
@@ -35,4 +35,4 @@ const Sidebar: React.FC = () => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

@@ -31,8 +31,8 @@ const AppContent: React.FC = () => {
   return (
     <div className={`min-h-screen ${currentTheme.bg}`}>
       <Header />
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 h-full">
+        <div className="flex flex-row gap-6 h-full min-h-[600px]">
           <Sidebar />
           <div className="flex-1">
             {renderContent()}
@@ -51,4 +51,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App; 
+export default App;
