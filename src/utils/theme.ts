@@ -3,14 +3,14 @@ import { ThemeClasses } from '../types';
 export const themeClasses: Record<'light' | 'dark', ThemeClasses> = {
   light: {
     bg: 'bg-app-light-bg',
-    cardBg: 'bg-white',
-    headerBg: 'bg-white',
+    cardBg: 'bg-app-light-card',
+    headerBg: 'bg-app-light-card',
     text: 'text-app-light-text',
     textSecondary: 'text-gray-600',
     textMuted: 'text-gray-500',
     border: 'border-app-light-border',
     hover: 'hover:bg-gray-50',
-    sidebar: 'bg-white',
+    sidebar: 'bg-app-light-card',
     input: 'bg-white border-gray-300'
   },
   dark: {

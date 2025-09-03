@@ -7,6 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        'app-light-card': '#FEFBF5',
         'app-light-bg': '#F4F0E8',
         'app-dark-bg': '#101223',
         'app-light-text': '#1A202C',
