@@ -4,9 +4,27 @@ A modern, responsive availability scheduling application built with React, TypeS
 
 ## Screenshots
 
-<img src="images/Screenshot.png" alt="Screenshot" width="200" height="150">
+### Lightmode
 
-<img src="images/Screenshot_darkmode.png" alt="Screenshot dark mode" width="200" height="150">
+<img src="images/lightmode/DashboadLightmode.png" alt="Screenshot dashboard light mode" width="200" height="150">
+
+<img src="images/lightmode/AvailabilityLightmode.png" alt="Screenshot availability light mode" width="200" height="150">
+
+
+<img src="images/lightmode/GroupsLightmode.png" alt="Screenshot groups light mode" width="200" height="150">
+
+
+<img src="images/lightmode/SettingsLightmode.png" alt="Screenshot settings light mode" width="200" height="150">
+
+### Darkmode
+
+<img src="images/darkmode/DashboardDarkmode.png" alt="Screenshot dashboard dark mode" width="200" height="150">
+
+<img src="images/darkmode/AvailabilityDarkmode.png" alt="Screenshot availability dark mode" width="200" height="150">
+
+<img src="images/darkmode/GroupsDarkmode.png" alt="Screenshot groups dark mode" width="200" height="150">
+
+<img src="images/darkmode/SettingsDarkmode.png" alt="Screenshot settings dark mode" width="200" height="150">
 
 ## Features
 
