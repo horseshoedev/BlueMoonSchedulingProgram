@@ -2,6 +2,8 @@
 
 A modern, responsive availability scheduling application built with React, TypeScript, and Tailwind CSS.
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/0c26db7a-502c-493f-9462-16d5c0d047e7/deploy-status)](https://app.netlify.com/projects/bluemoonschedule/deploys)
+
 ## Screenshots
 
 ### Lightmode
