@@ -1,6 +1,10 @@
 export interface User {
+  id: string;
+  email: string;
   name: string;
   preferences: UserPreferences;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserPreferences {
@@ -47,6 +51,8 @@ export interface Group {
   members: number;
   type: string;
   lastActive: string;
+  isJoined?: boolean;
+  description?: string;
 }
 
 export interface ThemeClasses {
@@ -62,4 +68,38 @@ export interface ThemeClasses {
   input: string;
 }
 
-export type TabType = 'dashboard' | 'availability' | 'groups' | 'settings'; 
+export type TabType = 'dashboard' | 'availability' | 'groups' | 'settings';
+
+// Authentication types
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  name: string;
+  confirmPassword: string;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  token: string;
+}
+
+export interface AuthContextType {
+  user: AuthUser | null;
+  token: string | null;
+  isLoading: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
+} 

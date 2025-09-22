@@ -36,3 +36,6 @@ dist-ssr
 *.log
 *.cache
 *.env
+
+# Claude
+CLAUDE.md

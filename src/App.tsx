@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppProvider } from './contexts/AppContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { useAppContext } from './hooks/useAppContext';
 import { themeClasses } from './utils/theme';
 import Header from './components/Header';
@@ -8,6 +9,7 @@ import Dashboard from './components/Dashboard';
 import Availability from './components/Availability';
 import Groups from './components/Groups';
 import Settings from './components/Settings';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const AppContent: React.FC = () => {
   const { activeTab, theme } = useAppContext();
@@ -45,9 +47,13 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <ProtectedRoute>
+          <AppContent />
+        </ProtectedRoute>
+      </AppProvider>
+    </AuthProvider>
   );
 };
 
