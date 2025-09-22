@@ -22,11 +22,29 @@ const Groups: React.FC = () => {
 
   const groupTypes = ['all', 'work', 'personal', 'social'];
 
+  const handleCreateGroup = () => {
+    // For now, just show an alert - this would open a modal or form in a real app
+    alert('Create group functionality - this would open a form to create a new group');
+  };
+
+  const handleScheduleMeeting = (groupName: string) => {
+    // For now, just show an alert - this would open a scheduling interface
+    alert(`Schedule meeting with ${groupName} - this would open the scheduling interface`);
+  };
+
+  const handleShareGroup = (groupName: string) => {
+    // For now, just show an alert - this would open a sharing interface
+    alert(`Share ${groupName} - this would open a sharing interface or copy invite link`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className={`text-xl font-bold ${currentTheme.text}`}>Groups & Sharing</h2>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center">
+        <button
+          onClick={handleCreateGroup}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center transition-colors"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Create Group
         </button>
@@ -110,11 +128,18 @@ const Groups: React.FC = () => {
                   </>
                 )}
               </button>
-              <button className={`px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center`}>
+              <button
+                onClick={() => handleScheduleMeeting(group.name)}
+                className={`px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center transition-colors`}
+              >
                 <Calendar className="h-4 w-4 mr-1" />
                 Schedule
               </button>
-              <button className={`px-3 py-2 ${theme === 'light' ? 'bg-gray-50 text-gray-600 hover:bg-gray-100' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} rounded`}>
+              <button
+                onClick={() => handleShareGroup(group.name)}
+                className={`px-3 py-2 ${theme === 'light' ? 'bg-gray-50 text-gray-600 hover:bg-gray-100' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} rounded transition-colors`}
+                title="Share group"
+              >
                 <Share2 className="h-4 w-4" />
               </button>
             </div>

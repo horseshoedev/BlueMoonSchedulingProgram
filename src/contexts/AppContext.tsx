@@ -17,6 +17,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     id: '',
     email: '',
     name: 'Alex Chen',
+    profileIcon: '',
     preferences: {
       workingHours: { start: '9:00', end: '17:00' },
       timeZone: 'PST',

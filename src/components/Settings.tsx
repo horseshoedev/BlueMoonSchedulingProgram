@@ -3,7 +3,7 @@ import { useAppContext } from '../hooks/useAppContext';
 import { useAuth } from '../hooks/useAuth';
 import { themeClasses } from '../utils/theme';
 import { formatTime } from '../utils/time';
-import { User, Mail, Lock, Camera, Save, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Camera, Save, Eye, EyeOff, X } from 'lucide-react';
 import ProfilePicture from './ProfilePicture';
 
 const Settings: React.FC = () => {
@@ -11,26 +11,35 @@ const Settings: React.FC = () => {
   const { user: authUser } = useAuth();
   const currentTheme = themeClasses[theme];
   
+  // Available user icons
+  const userIcons = [
+    { name: 'Sol', path: '/images/userIcons/solUserIcon.png' },
+    { name: 'Mercury', path: '/images/userIcons/mercuryUserIcon.png' },
+    { name: 'Mars', path: '/images/userIcons/marsUserIcon.png' },
+    { name: 'Jupiter', path: '/images/userIcons/jupiterUserIcon.png' },
+    { name: 'Saturn', path: '/images/userIcons/saturnUserIcon.png' }
+  ];
+
   // Profile state
   const [profileData, setProfileData] = useState({
     name: authUser?.name || user.name,
     email: authUser?.email || user.email,
     currentPassword: '',
     newPassword: '',
-    confirmPassword: '',
-    profilePicture: null as File | null
+    confirmPassword: ''
   });
-  
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false
   });
-  
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showIconPicker, setShowIconPicker] = useState(false);
 
-  const handleProfileChange = (field: string, value: string | File | null) => {
+  const handleProfileChange = (field: string, value: string) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
@@ -44,11 +53,16 @@ const Settings: React.FC = () => {
     }));
   };
 
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleProfileChange('profilePicture', file);
-    }
+  const handleIconSelect = (iconPath: string) => {
+    setUser({
+      ...user,
+      profileIcon: iconPath
+    });
+    setShowIconPicker(false);
+  };
+
+  const handleOpenIconPicker = () => {
+    setShowIconPicker(true);
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -69,11 +83,11 @@ const Settings: React.FC = () => {
 
       // Here you would typically make API calls to update the profile
       // For now, we'll just update the local state
-      setUser(prev => ({
-        ...prev,
+      setUser({
+        ...user,
         name: profileData.name,
         email: profileData.email
-      }));
+      });
 
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       
@@ -114,6 +128,35 @@ const Settings: React.FC = () => {
     });
   };
 
+  const handlePreferredTimeChange = (timeSlot: string, checked: boolean) => {
+    const currentTimes = user.preferences.preferredTimes;
+    let newTimes;
+
+    if (checked) {
+      newTimes = [...currentTimes, timeSlot];
+    } else {
+      newTimes = currentTimes.filter(time => time !== timeSlot);
+    }
+
+    setUser({
+      ...user,
+      preferences: {
+        ...user.preferences,
+        preferredTimes: newTimes
+      }
+    });
+  };
+
+  const handleDisconnectCalendar = () => {
+    // For now, just show an alert - this would disconnect from Google Calendar
+    alert('Disconnect Google Calendar - this would remove calendar integration');
+  };
+
+  const handleAddCalendar = () => {
+    // For now, just show an alert - this would open calendar connection flow
+    alert('Add Calendar - this would open the calendar integration setup');
+  };
+
   return (
     <div className="space-y-6">
       <h2 className={`text-xl font-bold ${currentTheme.text}`}>Settings</h2>
@@ -131,27 +174,26 @@ const Settings: React.FC = () => {
             <label className={`block text-sm font-medium ${currentTheme.text} mb-3`}>Profile Picture</label>
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <ProfilePicture 
-                  name={profileData.name} 
-                  size="lg" 
+                <ProfilePicture
+                  name={profileData.name}
+                  size="lg"
+                  profileIcon={user.profileIcon}
                 />
-                <label className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
+                <button
+                  type="button"
+                  onClick={handleOpenIconPicker}
+                  className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+                >
                   <Camera className="h-4 w-4 text-white" />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePictureChange}
-                    className="hidden"
-                  />
-                </label>
+                </button>
               </div>
               <div>
                 <p className={`text-sm ${currentTheme.textSecondary}`}>
-                  Click the camera icon to upload a new profile picture
+                  Click the camera icon to choose a profile icon
                 </p>
-                {profileData.profilePicture && (
+                {user.profileIcon && (
                   <p className={`text-xs ${currentTheme.textMuted}`}>
-                    Selected: {profileData.profilePicture.name}
+                    Current: {userIcons.find(icon => icon.path === user.profileIcon)?.name || 'Custom'}
                   </p>
                 )}
               </div>
@@ -352,10 +394,19 @@ const Settings: React.FC = () => {
         <div>
           <h3 className={`font-semibold mb-3 ${currentTheme.text}`}>Preferred Meeting Times</h3>
           <div className="space-y-2">
-            {['Morning (9-12)', 'Afternoon (12-17)', 'Evening (17-20)'].map(time => (
-              <label key={time} className="flex items-center">
-                <input type="checkbox" className="mr-2" defaultChecked />
-                <span className={`text-sm ${currentTheme.text}`}>{time}</span>
+            {[
+              { key: 'morning', label: 'Morning (9-12)' },
+              { key: 'afternoon', label: 'Afternoon (12-17)' },
+              { key: 'evening', label: 'Evening (17-20)' }
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center">
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  checked={user.preferences.preferredTimes.includes(key)}
+                  onChange={(e) => handlePreferredTimeChange(key, e.target.checked)}
+                />
+                <span className={`text-sm ${currentTheme.text}`}>{label}</span>
               </label>
             ))}
           </div>
@@ -372,16 +423,71 @@ const Settings: React.FC = () => {
                   <p className={`text-sm ${currentTheme.textSecondary}`}>Connected</p>
                 </div>
               </div>
-              <button className="px-3 py-1 bg-red-100 text-red-600 text-sm rounded">
+              <button
+                onClick={handleDisconnectCalendar}
+                className="px-3 py-1 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200 transition-colors"
+              >
                 Disconnect
               </button>
             </div>
-            <button className={`w-full px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.hover} ${currentTheme.text}`}>
+            <button
+              onClick={handleAddCalendar}
+              className={`w-full px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.hover} ${currentTheme.text} transition-colors`}
+            >
               + Add Calendar
             </button>
           </div>
         </div>
       </div>
+
+      {/* Icon Picker Modal */}
+      {showIconPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${currentTheme.cardBg} border ${currentTheme.border} rounded-lg p-6 max-w-md w-full mx-4`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Choose Profile Icon</h3>
+              <button
+                onClick={() => setShowIconPicker(false)}
+                className={`p-1 rounded-full ${currentTheme.hover} transition-colors`}
+              >
+                <X className={`h-5 w-5 ${currentTheme.textSecondary}`} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {userIcons.map((icon) => (
+                <button
+                  key={icon.name}
+                  onClick={() => handleIconSelect(icon.path)}
+                  className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                    user.profileIcon === icon.path
+                      ? 'border-blue-500 bg-blue-50'
+                      : `border-gray-200 hover:border-blue-300 ${currentTheme.hover}`
+                  }`}
+                >
+                  <div className="flex flex-col items-center space-y-2">
+                    <img
+                      src={icon.path}
+                      alt={icon.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <span className={`text-xs font-medium ${currentTheme.text}`}>
+                      {icon.name}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => handleIconSelect('')}
+                className={`w-full px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.hover} ${currentTheme.text} transition-colors`}
+              >
+                Use Default (No Icon)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

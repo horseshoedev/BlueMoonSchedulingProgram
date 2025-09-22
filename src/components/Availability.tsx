@@ -13,18 +13,37 @@ const Availability: React.FC = () => {
   const [partiallyFreeOpen, setPartiallyFreeOpen] = useState(true);
   const [recurringOpen, setRecurringOpen] = useState(true);
 
+  // Filter state
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedFilter(e.target.value);
+  };
+
+  const handleAddBlock = () => {
+    // For now, just show an alert - this would open a modal or form in a real app
+    alert('Add availability block functionality - this would open a form to add new availability');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className={`text-xl font-bold ${currentTheme.text}`}>My Availability</h2>
         <div className="flex space-x-2">
-          <select className={`px-3 py-2 border rounded text-sm ${currentTheme.input}`}>
-            <option>All Event Types</option>
-            <option>Work Only</option>
-            <option>Social Only</option>
-            <option>Personal Only</option>
+          <select
+            value={selectedFilter}
+            onChange={handleFilterChange}
+            className={`px-3 py-2 border rounded text-sm ${currentTheme.input}`}
+          >
+            <option value="all">All Event Types</option>
+            <option value="work">Work Only</option>
+            <option value="social">Social Only</option>
+            <option value="personal">Personal Only</option>
           </select>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center">
+          <button
+            onClick={handleAddBlock}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center transition-colors"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Block
           </button>

@@ -1,17 +1,21 @@
 import React from 'react';
-import { Bell, User, LogOut } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { useAuth } from '../hooks/useAuth';
 import { themeClasses } from '../utils/theme';
 import ProfilePicture from './ProfilePicture';
 
 const Header: React.FC = () => {
-  const { user, theme } = useAppContext();
+  const { user, theme, invitations, setActiveTab } = useAppContext();
   const { logout, user: authUser } = useAuth();
   const currentTheme = themeClasses[theme];
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleNotificationClick = () => {
+    setActiveTab('dashboard');
   };
 
   return (
@@ -24,13 +28,25 @@ const Header: React.FC = () => {
           <h1 className={`text-xl font-bold ${currentTheme.text}`}>Blue Moon</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <Bell className={`h-5 w-5 ${currentTheme.textSecondary}`} />
+          <button
+            onClick={handleNotificationClick}
+            className={`relative p-1 rounded-full ${currentTheme.hover} transition-colors`}
+            title="View notifications"
+          >
+            <Bell className={`h-5 w-5 ${currentTheme.textSecondary}`} />
+            {invitations.length > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {invitations.length}
+              </span>
+            )}
+          </button>
           <div className="flex items-center space-x-3">
             <div className="flex items-center">
-              <ProfilePicture 
-                name={authUser?.name || user.name} 
-                size="md" 
-                className="mr-2" 
+              <ProfilePicture
+                name={authUser?.name || user.name}
+                size="md"
+                className="mr-2"
+                profileIcon={user.profileIcon}
               />
               <span className={`text-sm font-medium ${currentTheme.text}`}>
                 {authUser?.name || user.name}

@@ -4,8 +4,26 @@ import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 
 const Dashboard: React.FC = () => {
-  const { availabilityData, groups, invitations, setActiveTab, theme } = useAppContext();
+  const { availabilityData, groups, invitations, setInvitations, setActiveTab, theme, joinGroup } = useAppContext();
   const currentTheme = themeClasses[theme];
+
+  const handleAcceptInvitation = (invitationId: number) => {
+    const invitation = invitations.find(inv => inv.id === invitationId);
+    if (invitation) {
+      // Find the group by name and join it
+      const groupToJoin = groups.find(group => group.name === invitation.group);
+      if (groupToJoin) {
+        joinGroup(groupToJoin.id);
+      }
+      // Remove the invitation from the list
+      setInvitations(invitations.filter(inv => inv.id !== invitationId));
+    }
+  };
+
+  const handleDeclineInvitation = (invitationId: number) => {
+    // Remove the invitation from the list
+    setInvitations(invitations.filter(inv => inv.id !== invitationId));
+  };
 
   const stats = [
     {
@@ -83,10 +101,16 @@ const Dashboard: React.FC = () => {
                   <p className={`text-sm ${currentTheme.textSecondary}`}>{invite.group} • {invite.type}</p>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                  <button
+                    onClick={() => handleAcceptInvitation(invite.id)}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                  >
                     Accept
                   </button>
-                  <button className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400">
+                  <button
+                    onClick={() => handleDeclineInvitation(invite.id)}
+                    className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400 transition-colors"
+                  >
                     Decline
                   </button>
                 </div>
