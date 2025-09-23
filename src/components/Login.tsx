@@ -16,11 +16,26 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Basic validation
+    if (!credentials.email.trim()) {
+      setError('Email address is required');
+      return;
+    }
+
+    if (!credentials.password) {
+      setError('Password is required');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      console.log('Attempting login with:', { email: credentials.email });
       await login(credentials);
+      console.log('Login successful');
     } catch (err) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsSubmitting(false);

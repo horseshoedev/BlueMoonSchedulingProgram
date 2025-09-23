@@ -44,19 +44,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     fullyFree: [
-      { date: '2025-08-07', day: 'Thursday' },
-      { date: '2025-08-09', day: 'Saturday' },
-      { date: '2025-08-10', day: 'Sunday' },
-      { date: '2025-08-14', day: 'Thursday' }
+      { date: '2025-08-07', day: 'Thursday', eventType: 'work' },
+      { date: '2025-08-09', day: 'Saturday', eventType: 'social' },
+      { date: '2025-08-10', day: 'Sunday', eventType: 'personal' },
+      { date: '2025-08-14', day: 'Thursday', eventType: 'work' }
     ],
     partiallyFree: [
-      { date: '2025-08-06', day: 'Wednesday', availableSlots: ['9:00-11:00', '14:00-17:00'] },
-      { date: '2025-08-08', day: 'Friday', availableSlots: ['13:00-17:00'] },
-      { date: '2025-08-12', day: 'Tuesday', availableSlots: ['9:00-12:00'] }
+      { date: '2025-08-06', day: 'Wednesday', availableSlots: ['9:00-11:00', '14:00-17:00'], eventType: 'work' },
+      { date: '2025-08-08', day: 'Friday', availableSlots: ['13:00-17:00'], eventType: 'personal' },
+      { date: '2025-08-12', day: 'Tuesday', availableSlots: ['9:00-12:00'], eventType: 'social' }
     ],
     recurring: [
       { pattern: 'Every Friday 15:00-17:00', type: 'work', description: 'Open office hours' },
-      { pattern: 'Every Saturday morning', type: 'social', description: 'Weekend hangouts' }
+      { pattern: 'Every Saturday morning', type: 'social', description: 'Weekend hangouts' },
+      { pattern: 'Every Sunday evening', type: 'personal', description: 'Family time' }
     ]
   });
 
@@ -78,20 +79,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     { id: 10, name: 'Cooking Club', members: 10, type: 'social', lastActive: '5 days ago', isJoined: false, description: 'Cooking classes and recipe sharing' }
   ]);
 
-  const joinGroup = (groupId: number) => {
-    setGroups(prevGroups => 
-      prevGroups.map(group => 
-        group.id === groupId 
+  const joinGroup = (groupId: number | string) => {
+    setGroups(prevGroups =>
+      prevGroups.map(group =>
+        group.id === groupId
           ? { ...group, isJoined: true, members: group.members + 1 }
           : group
       )
     );
   };
 
-  const leaveGroup = (groupId: number) => {
-    setGroups(prevGroups => 
-      prevGroups.map(group => 
-        group.id === groupId 
+  const addGroup = (group: Group) => {
+    setGroups(prevGroups => [...prevGroups, { ...group, isJoined: true }]);
+  };
+
+  const leaveGroup = (groupId: number | string) => {
+    setGroups(prevGroups =>
+      prevGroups.map(group =>
+        group.id === groupId
           ? { ...group, isJoined: false, members: Math.max(0, group.members - 1) }
           : group
       )
@@ -111,6 +116,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setInvitations,
     groups,
     setGroups,
+    addGroup,
     joinGroup,
     leaveGroup
   };

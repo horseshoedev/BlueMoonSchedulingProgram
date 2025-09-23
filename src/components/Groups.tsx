@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { Plus, Users, Clock, Calendar, Share2, UserPlus, UserMinus, Filter } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
+import GroupForm from './GroupForm';
+import { Group } from '../types';
 
 const Groups: React.FC = () => {
-  const { groups, theme, joinGroup, leaveGroup } = useAppContext();
+  const { groups, theme, joinGroup, leaveGroup, addGroup } = useAppContext();
   const currentTheme = themeClasses[theme];
   const [filterType, setFilterType] = useState<string>('all');
+  const [showGroupForm, setShowGroupForm] = useState(false);
 
-  const handleJoinLeave = (groupId: number, isJoined: boolean) => {
+  const handleJoinLeave = (groupId: number | string, isJoined: boolean) => {
     if (isJoined) {
       leaveGroup(groupId);
     } else {
@@ -23,8 +26,11 @@ const Groups: React.FC = () => {
   const groupTypes = ['all', 'work', 'personal', 'social'];
 
   const handleCreateGroup = () => {
-    // For now, just show an alert - this would open a modal or form in a real app
-    alert('Create group functionality - this would open a form to create a new group');
+    setShowGroupForm(true);
+  };
+
+  const handleGroupCreated = (group: Group) => {
+    addGroup(group);
   };
 
   const handleScheduleMeeting = (groupName: string) => {
@@ -146,6 +152,14 @@ const Groups: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Group Creation Form Modal */}
+      <GroupForm
+        isOpen={showGroupForm}
+        onClose={() => setShowGroupForm(false)}
+        onSuccess={handleGroupCreated}
+        theme={theme}
+      />
     </div>
   );
 };

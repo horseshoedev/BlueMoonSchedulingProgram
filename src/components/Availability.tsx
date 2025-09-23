@@ -25,6 +25,21 @@ const Availability: React.FC = () => {
     alert('Add availability block functionality - this would open a form to add new availability');
   };
 
+  // Filter availability data based on selected event type
+  const getFilteredData = () => {
+    if (selectedFilter === 'all') {
+      return availabilityData;
+    }
+
+    return {
+      fullyFree: availabilityData.fullyFree.filter(day => day.eventType === selectedFilter),
+      partiallyFree: availabilityData.partiallyFree.filter(day => day.eventType === selectedFilter),
+      recurring: availabilityData.recurring.filter(pattern => pattern.type === selectedFilter)
+    };
+  };
+
+  const filteredData = getFilteredData();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -64,7 +79,7 @@ const Availability: React.FC = () => {
         </button>
         {fullyFreeOpen && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {availabilityData.fullyFree.map((day, idx) => (
+            {filteredData.fullyFree.map((day, idx) => (
               <div key={idx} className={`${theme === 'light' ? 'bg-green-50 border-green-200' : 'bg-green-900 border-green-700'} border rounded p-3`}>
                 <p className={`font-medium ${theme === 'light' ? 'text-green-800' : 'text-green-300'}`}>{day.day}</p>
                 <p className={`text-sm ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`}>{day.date}</p>
@@ -89,7 +104,7 @@ const Availability: React.FC = () => {
         </button>
         {partiallyFreeOpen && (
           <div className="space-y-3">
-            {availabilityData.partiallyFree.map((day, idx) => (
+            {filteredData.partiallyFree.map((day, idx) => (
               <div key={idx} className={`${theme === 'light' ? 'bg-blue-50 border-blue-200' : 'bg-blue-900 border-blue-700'} border rounded p-3`}>
                 <div className="flex items-center justify-between mb-2">
                   <div>
@@ -124,7 +139,7 @@ const Availability: React.FC = () => {
         </button>
         {recurringOpen && (
           <div className="space-y-3">
-            {availabilityData.recurring.map((pattern, idx) => (
+            {filteredData.recurring.map((pattern, idx) => (
               <div key={idx} className={`${theme === 'light' ? 'bg-purple-50 border-purple-200' : 'bg-purple-900 border-purple-700'} border rounded p-3`}>
                 <div className="flex items-center justify-between">
                   <div>

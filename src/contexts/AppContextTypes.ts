@@ -13,6 +13,7 @@ export interface AppContextType {
   setInvitations: (invitations: Invitation[]) => void;
   groups: Group[];
   setGroups: (groups: Group[]) => void;
-  joinGroup: (groupId: number) => void;
-  leaveGroup: (groupId: number) => void;
+  addGroup: (group: Group) => void;
+  joinGroup: (groupId: number | string) => void;
+  leaveGroup: (groupId: number | string) => void;
 } 

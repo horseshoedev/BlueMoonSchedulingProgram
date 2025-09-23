@@ -24,6 +24,7 @@ export interface AvailabilityDay {
   date: string;
   day: string;
   availableSlots?: string[];
+  eventType?: 'work' | 'social' | 'personal';
 }
 
 export interface RecurringPattern {
@@ -47,13 +48,17 @@ export interface Invitation {
 }
 
 export interface Group {
-  id: number;
+  id: number | string;
   name: string;
   members: number;
   type: string;
-  lastActive: string;
+  lastActive?: string;
   isJoined?: boolean;
   description?: string;
+  role?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ThemeClasses {
@@ -101,6 +106,7 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
+  registerOnly: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 } 

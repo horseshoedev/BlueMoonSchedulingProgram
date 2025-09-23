@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { RegisterCredentials } from '../types';
-import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, UserPlus, CheckCircle } from 'lucide-react';
 
 const Register: React.FC = () => {
-  const { register, isLoading } = useAuth();
+  const { registerOnly, isLoading } = useAuth();
   const [credentials, setCredentials] = useState<RegisterCredentials>({
     email: '',
     password: '',
@@ -15,27 +15,55 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     // Validation
+    if (!credentials.name.trim()) {
+      setError('Full name is required');
+      return;
+    }
+
+    if (!credentials.email.trim()) {
+      setError('Email address is required');
+      return;
+    }
+
     if (credentials.password !== credentials.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (credentials.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (credentials.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(credentials.password)) {
+      setError('Password must contain at least one uppercase letter, one lowercase letter, and one number');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await register(credentials);
+      console.log('Attempting registration with:', {
+        name: credentials.name,
+        email: credentials.email
+      });
+      await registerOnly(credentials);
+      console.log('Registration successful');
+      setShowSuccess(true);
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('showLogin'));
+      }, 3000);
     } catch (err) {
+      console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsSubmitting(false);
@@ -49,6 +77,37 @@ const Register: React.FC = () => {
       [name]: value,
     }));
   };
+
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Sign up successful!
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Your account has been created successfully.
+            </p>
+            <p className="mt-4 text-center text-sm text-gray-500">
+              Redirecting to login page in 3 seconds...
+            </p>
+            <div className="mt-6">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('showLogin'))}
+                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Go to Login Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

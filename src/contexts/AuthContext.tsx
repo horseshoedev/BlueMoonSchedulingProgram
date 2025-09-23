@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const data: AuthResponse = await response.json();
-      
+
       setUser(data.user);
       setToken(data.token);
       localStorage.setItem('authToken', data.token);
@@ -83,6 +83,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const registerOnly = async (credentials: RegisterCredentials): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
+      // Don't set user/token, just validate the registration was successful
+      await response.json();
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
   };
 
@@ -101,6 +124,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     register,
+    registerOnly,
     logout,
     isAuthenticated,
   };
