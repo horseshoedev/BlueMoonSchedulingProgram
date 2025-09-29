@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Plus, Users, Clock, Calendar, Share2, UserPlus, UserMinus, Filter } from 'lucide-react';
+import { Plus, Users, Clock, Calendar, Share2, UserPlus, UserMinus, Filter, Eye } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 import GroupForm from './GroupForm';
+import GroupDetailModal from './GroupDetailModal';
 import { Group } from '../types';
 
 const Groups: React.FC = () => {
-  const { groups, theme, joinGroup, leaveGroup, addGroup } = useAppContext();
+  const { groups, theme, joinGroup, leaveGroup, addGroup, setActiveTab } = useAppContext();
   const currentTheme = themeClasses[theme];
   const [filterType, setFilterType] = useState<string>('all');
   const [showGroupForm, setShowGroupForm] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [showGroupDetail, setShowGroupDetail] = useState(false);
 
   const handleJoinLeave = (groupId: number | string, isJoined: boolean) => {
     if (isJoined) {
@@ -33,14 +36,26 @@ const Groups: React.FC = () => {
     addGroup(group);
   };
 
-  const handleScheduleMeeting = (groupName: string) => {
-    // For now, just show an alert - this would open a scheduling interface
-    alert(`Schedule meeting with ${groupName} - this would open the scheduling interface`);
+  const handleScheduleMeeting = (groupId: number | string, groupName: string) => {
+    // Navigate to schedule tab and open scheduling form for this group
+    setActiveTab('schedule');
+    // In a more complex implementation, we could pass group data via context or state
+    // For now, we'll just navigate to the schedule tab where users can create events
   };
 
   const handleShareGroup = (groupName: string) => {
     // For now, just show an alert - this would open a sharing interface
     alert(`Share ${groupName} - this would open a sharing interface or copy invite link`);
+  };
+
+  const handleViewDetails = (group: Group) => {
+    setSelectedGroup(group);
+    setShowGroupDetail(true);
+  };
+
+  const handleCloseGroupDetail = () => {
+    setShowGroupDetail(false);
+    setSelectedGroup(null);
   };
 
   return (
@@ -114,10 +129,10 @@ const Groups: React.FC = () => {
             </div>
             
             <div className="mt-4 flex space-x-2">
-              <button 
+              <button
                 onClick={() => handleJoinLeave(group.id, group.isJoined || false)}
                 className={`flex-1 px-3 py-2 rounded flex items-center justify-center transition-colors ${
-                  group.isJoined 
+                  group.isJoined
                     ? `${theme === 'light' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-red-900 text-red-300 hover:bg-red-800'}`
                     : `${theme === 'light' ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-green-900 text-green-300 hover:bg-green-800'}`
                 }`}
@@ -135,7 +150,15 @@ const Groups: React.FC = () => {
                 )}
               </button>
               <button
-                onClick={() => handleScheduleMeeting(group.name)}
+                onClick={() => handleViewDetails(group)}
+                className={`px-3 py-2 ${theme === 'light' ? 'bg-purple-50 text-purple-600 hover:bg-purple-100' : 'bg-purple-900 text-purple-300 hover:bg-purple-800'} rounded flex items-center justify-center transition-colors`}
+                title="View group details"
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                Details
+              </button>
+              <button
+                onClick={() => handleScheduleMeeting(group.id, group.name)}
                 className={`px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center transition-colors`}
               >
                 <Calendar className="h-4 w-4 mr-1" />
@@ -159,6 +182,16 @@ const Groups: React.FC = () => {
         onClose={() => setShowGroupForm(false)}
         onSuccess={handleGroupCreated}
         theme={theme}
+      />
+
+      {/* Group Detail Modal */}
+      <GroupDetailModal
+        isOpen={showGroupDetail}
+        onClose={handleCloseGroupDetail}
+        group={selectedGroup}
+        theme={theme}
+        onScheduleMeeting={handleScheduleMeeting}
+        onLeaveGroup={leaveGroup}
       />
     </div>
   );

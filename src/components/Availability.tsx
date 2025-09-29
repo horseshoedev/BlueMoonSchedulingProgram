@@ -3,9 +3,10 @@ import { Plus, CheckCircle, Circle, Clock, ChevronDown, ChevronRight } from 'luc
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 import { formatTimeSlot } from '../utils/time';
+import AvailabilityForm from './AvailabilityForm';
 
 const Availability: React.FC = () => {
-  const { availabilityData, user, theme } = useAppContext();
+  const { availabilityData, user, theme, addAvailabilityBlock } = useAppContext();
   const currentTheme = themeClasses[theme];
 
   // Collapsible state
@@ -16,13 +17,21 @@ const Availability: React.FC = () => {
   // Filter state
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
+  // Form state
+  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
+
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedFilter(e.target.value);
   };
 
   const handleAddBlock = () => {
-    // For now, just show an alert - this would open a modal or form in a real app
-    alert('Add availability block functionality - this would open a form to add new availability');
+    setShowAvailabilityForm(true);
+  };
+
+  const handleAvailabilityAdded = () => {
+    // In a real app, this would refresh the availability data from the context/API
+    console.log('Availability block added successfully');
+    setShowAvailabilityForm(false);
   };
 
   // Filter availability data based on selected event type
@@ -155,6 +164,14 @@ const Availability: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Availability Form Modal */}
+      <AvailabilityForm
+        isOpen={showAvailabilityForm}
+        onClose={() => setShowAvailabilityForm(false)}
+        onSuccess={handleAvailabilityAdded}
+        theme={theme}
+      />
     </div>
   );
 };

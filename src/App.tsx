@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Availability from './components/Availability';
 import Groups from './components/Groups';
+import Schedule from './components/Schedule';
 import Settings from './components/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -23,6 +24,8 @@ const AppContent: React.FC = () => {
         return <Availability />;
       case 'groups':
         return <Groups />;
+      case 'schedule':
+        return <Schedule />;
       case 'settings':
         return <Settings />;
       default:

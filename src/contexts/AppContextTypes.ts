@@ -9,6 +9,7 @@ export interface AppContextType {
   setUser: (user: User) => void;
   availabilityData: AvailabilityData;
   setAvailabilityData: (data: AvailabilityData) => void;
+  addAvailabilityBlock: (type: 'fullyFree' | 'partiallyFree' | 'recurring', data: any) => void;
   invitations: Invitation[];
   setInvitations: (invitations: Invitation[]) => void;
   groups: Group[];

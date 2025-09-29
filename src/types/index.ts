@@ -74,7 +74,7 @@ export interface ThemeClasses {
   input: string;
 }
 
-export type TabType = 'dashboard' | 'availability' | 'groups' | 'settings';
+export type TabType = 'dashboard' | 'availability' | 'groups' | 'schedule' | 'settings';
 
 // Authentication types
 export interface AuthUser {
@@ -109,4 +109,38 @@ export interface AuthContextType {
   registerOnly: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+}
+
+// Schedule types
+export interface ScheduleEvent {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: string;
+  endTime: string;
+  date: string;
+  type: 'work' | 'personal' | 'social';
+  groupId?: string;
+  groupName?: string;
+  attendees: string[];
+  location?: string;
+  isRecurring?: boolean;
+  recurringPattern?: string;
+  status: 'scheduled' | 'pending' | 'cancelled';
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleMeetingData {
+  title: string;
+  description?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  groupId?: string;
+  attendees: string[];
+  location?: string;
+  isRecurring?: boolean;
+  recurringPattern?: string;
 } 

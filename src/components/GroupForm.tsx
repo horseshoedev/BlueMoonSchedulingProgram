@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Users, Lock, Globe, UserPlus } from 'lucide-react';
+import { X, Users, Lock, Globe, UserPlus, Briefcase, User, Heart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { themeClasses } from '../utils/theme';
 import { Group } from '../types';
@@ -8,6 +8,7 @@ interface GroupFormData {
   name: string;
   description: string;
   type: 'public' | 'private' | 'invite-only';
+  category: 'work' | 'personal' | 'social';
 }
 
 interface GroupFormProps {
@@ -24,7 +25,8 @@ const GroupForm: React.FC<GroupFormProps> = ({ isOpen, onClose, onSuccess, theme
   const [formData, setFormData] = useState<GroupFormData>({
     name: '',
     description: '',
-    type: 'private'
+    type: 'private',
+    category: 'work'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +50,27 @@ const GroupForm: React.FC<GroupFormProps> = ({ isOpen, onClose, onSuccess, theme
       label: 'Invite Only',
       description: 'Only invited members can join',
       icon: <UserPlus className="h-4 w-4" />
+    }
+  ];
+
+  const groupCategories = [
+    {
+      value: 'work' as const,
+      label: 'Work',
+      description: 'Professional meetings and projects',
+      icon: <Briefcase className="h-4 w-4" />
+    },
+    {
+      value: 'personal' as const,
+      label: 'Personal',
+      description: 'Family and private events',
+      icon: <User className="h-4 w-4" />
+    },
+    {
+      value: 'social' as const,
+      label: 'Social',
+      description: 'Friends and social gatherings',
+      icon: <Heart className="h-4 w-4" />
     }
   ];
 
@@ -96,7 +119,8 @@ const GroupForm: React.FC<GroupFormProps> = ({ isOpen, onClose, onSuccess, theme
         body: JSON.stringify({
           name: formData.name.trim(),
           description: formData.description.trim(),
-          type: formData.type
+          type: formData.type,
+          category: formData.category
         })
       });
 
@@ -112,7 +136,8 @@ const GroupForm: React.FC<GroupFormProps> = ({ isOpen, onClose, onSuccess, theme
       setFormData({
         name: '',
         description: '',
-        type: 'private'
+        type: 'private',
+        category: 'work'
       });
 
       onSuccess(data.group);
@@ -129,7 +154,8 @@ const GroupForm: React.FC<GroupFormProps> = ({ isOpen, onClose, onSuccess, theme
     setFormData({
       name: '',
       description: '',
-      type: 'private'
+      type: 'private',
+      category: 'work'
     });
     setError('');
     onClose();
@@ -198,6 +224,38 @@ const GroupForm: React.FC<GroupFormProps> = ({ isOpen, onClose, onSuccess, theme
               <p className={`text-xs ${currentTheme.textMuted} mt-1`}>
                 {formData.description.length}/500 characters
               </p>
+            </div>
+
+            {/* Group Category */}
+            <div>
+              <label className={`block text-sm font-medium ${currentTheme.text} mb-3`}>
+                Category *
+              </label>
+              <div className="space-y-3">
+                {groupCategories.map((category) => (
+                  <label key={category.value} className="flex items-start cursor-pointer">
+                    <input
+                      type="radio"
+                      name="category"
+                      value={category.value}
+                      checked={formData.category === category.value}
+                      onChange={handleChange}
+                      className="mt-1 mr-3"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center">
+                        {category.icon}
+                        <span className={`ml-2 font-medium ${currentTheme.text}`}>
+                          {category.label}
+                        </span>
+                      </div>
+                      <p className={`text-sm ${currentTheme.textSecondary} mt-1`}>
+                        {category.description}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Group Type */}

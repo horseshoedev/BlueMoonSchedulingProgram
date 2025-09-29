@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, Users, Settings } from 'lucide-react';
+import { Calendar, Clock, Users, Settings, CalendarDays } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 import { TabType } from '../types';
@@ -12,6 +12,7 @@ const Sidebar: React.FC = () => {
     { key: 'dashboard', label: 'Dashboard', icon: <Calendar className="h-4 w-4 mr-3" /> },
     { key: 'availability', label: 'My Availability', icon: <Clock className="h-4 w-4 mr-3" /> },
     { key: 'groups', label: 'Groups', icon: <Users className="h-4 w-4 mr-3" /> },
+    { key: 'schedule', label: 'Schedule', icon: <CalendarDays className="h-4 w-4 mr-3" /> },
     { key: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4 mr-3" /> }
   ];
 

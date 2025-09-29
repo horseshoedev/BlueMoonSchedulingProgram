@@ -103,6 +103,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     );
   };
 
+  const addAvailabilityBlock = (type: 'fullyFree' | 'partiallyFree' | 'recurring', data: any) => {
+    setAvailabilityData(prev => {
+      const updated = { ...prev };
+
+      if (type === 'fullyFree') {
+        updated.fullyFree = [...prev.fullyFree, data];
+      } else if (type === 'partiallyFree') {
+        updated.partiallyFree = [...prev.partiallyFree, data];
+      } else if (type === 'recurring') {
+        updated.recurring = [...prev.recurring, data];
+      }
+
+      return updated;
+    });
+  };
+
   const value: AppContextType = {
     activeTab,
     setActiveTab,
@@ -112,6 +128,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setUser,
     availabilityData,
     setAvailabilityData,
+    addAvailabilityBlock,
     invitations,
     setInvitations,
     groups,
