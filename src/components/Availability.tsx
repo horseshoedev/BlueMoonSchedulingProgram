@@ -50,14 +50,14 @@ const Availability: React.FC = () => {
   const filteredData = getFilteredData();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className={`text-xl font-bold ${currentTheme.text}`}>My Availability</h2>
-        <div className="flex space-x-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <h2 className={`text-lg sm:text-xl font-bold ${currentTheme.text}`}>My Availability</h2>
+        <div className="flex flex-col sm:flex-row gap-2">
           <select
             value={selectedFilter}
             onChange={handleFilterChange}
-            className={`px-3 py-2 border rounded text-sm ${currentTheme.input}`}
+            className={`px-3 py-2 border rounded text-xs sm:text-sm ${currentTheme.input}`}
           >
             <option value="all">All Event Types</option>
             <option value="work">Work Only</option>
@@ -66,10 +66,10 @@ const Availability: React.FC = () => {
           </select>
           <button
             onClick={handleAddBlock}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center transition-colors"
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center transition-colors text-sm"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Block
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="sm:inline">Add Block</span>
           </button>
         </div>
       </div>
@@ -87,11 +87,11 @@ const Availability: React.FC = () => {
           {fullyFreeOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
         {fullyFreeOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {filteredData.fullyFree.map((day, idx) => (
-              <div key={idx} className={`${theme === 'light' ? 'bg-green-50 border-green-200' : 'bg-green-900 border-green-700'} border rounded p-3`}>
-                <p className={`font-medium ${theme === 'light' ? 'text-green-800' : 'text-green-300'}`}>{day.day}</p>
-                <p className={`text-sm ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`}>{day.date}</p>
+              <div key={idx} className={`${theme === 'light' ? 'bg-green-50 border-green-200' : 'bg-green-900 border-green-700'} border rounded p-2 sm:p-3`}>
+                <p className={`font-medium text-sm sm:text-base ${theme === 'light' ? 'text-green-800' : 'text-green-300'}`}>{day.day}</p>
+                <p className={`text-xs sm:text-sm ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`}>{day.date}</p>
                 <p className={`text-xs ${theme === 'light' ? 'text-green-500' : 'text-green-500'} mt-1`}>All day available</p>
               </div>
             ))}

@@ -143,4 +143,47 @@ export interface ScheduleMeetingData {
   location?: string;
   isRecurring?: boolean;
   recurringPattern?: string;
+}
+
+// Calendar Integration types
+export interface CalendarIntegration {
+  id: string;
+  userId: string;
+  provider: 'google' | 'ical';
+  accountEmail: string;
+  isConnected: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  calendarId?: string;
+  calendarName?: string;
+  lastSync?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+  location?: string;
+  attendees?: string[];
+  source: 'google' | 'ical' | 'local';
+  externalId?: string;
+  calendarId?: string;
+}
+
+export interface iCalConfig {
+  serverUrl: string;
+  username: string;
+  password: string;
+  calendarName?: string;
+}
+
+export interface CalendarSyncStatus {
+  isSyncing: boolean;
+  lastSyncTime?: string;
+  error?: string;
 } 

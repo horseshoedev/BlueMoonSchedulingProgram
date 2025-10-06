@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
+const { google } = require('googleapis');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -38,6 +40,25 @@ const users = [];
 const groups = [];
 const groupMembers = []; // { groupId, userId, role, joinedAt }
 const invitations = []; // { id, fromUserId, toUserId, groupId, status, createdAt }
+const calendarIntegrations = []; // { id, userId, provider, tokens, calendarId, etc. }
+
+// Initialize test user
+(async () => {
+  const testUserPassword = 'Imaging4-Taekwondo9-Charting4-Seventeen9-Securely2';
+  const hashedPassword = await bcrypt.hash(testUserPassword, 10);
+
+  const testUser = {
+    id: 'test-user-1',
+    email: 'alex.chen@test.com',
+    name: 'Alex Chen',
+    password: hashedPassword,
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  };
+
+  users.push(testUser);
+  console.log('Test user initialized: alex.chen@test.com');
+})();
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
@@ -802,6 +823,473 @@ app.delete('/api/groups/:groupId/members/:memberId', authenticateToken, async (r
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Google OAuth Configuration
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
+
+const SCOPES = [
+  'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/calendar.events'
+];
+
+// Google Calendar Routes
+app.get('/api/calendar/google/auth-url', authenticateToken, (req, res) => {
+  try {
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      prompt: 'consent',
+      state: req.user.id
+    });
+
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Generate auth URL error:', error);
+    res.status(500).json({ message: 'Failed to generate auth URL' });
+  }
+});
+
+app.get('/api/calendar/google/callback', async (req, res) => {
+  try {
+    const { code, state } = req.query;
+    const userId = state;
+
+    if (!code) {
+      return res.status(400).json({ message: 'Authorization code is required' });
+    }
+
+    // Exchange code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    // Get user's calendar info
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const calendarList = await calendar.calendarList.list();
+    const primaryCalendar = calendarList.data.items.find(cal => cal.primary);
+
+    // Remove existing Google integration for this user
+    const existingIndex = calendarIntegrations.findIndex(
+      ci => ci.userId === userId && ci.provider === 'google'
+    );
+    if (existingIndex > -1) {
+      calendarIntegrations.splice(existingIndex, 1);
+    }
+
+    // Create new integration
+    const integration = {
+      id: Date.now().toString(),
+      userId,
+      provider: 'google',
+      accountEmail: primaryCalendar?.summary || 'Unknown',
+      isConnected: true,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiresAt: new Date(tokens.expiry_date).toISOString(),
+      calendarId: primaryCalendar?.id || 'primary',
+      calendarName: primaryCalendar?.summary || 'Primary Calendar',
+      lastSync: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    calendarIntegrations.push(integration);
+
+    // Close the popup window with success
+    res.send(`
+      <html>
+        <body>
+          <script>
+            window.opener.postMessage({ type: 'google-oauth-success' }, '*');
+            window.close();
+          </script>
+          <p>Authorization successful! You can close this window.</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Google OAuth callback error:', error);
+    res.send(`
+      <html>
+        <body>
+          <script>
+            window.opener.postMessage({ type: 'google-oauth-error', error: '${error.message}' }, '*');
+            window.close();
+          </script>
+          <p>Authorization failed. Please try again.</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
+app.get('/api/calendar/google/integration', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const integration = calendarIntegrations.find(
+      ci => ci.userId === userId && ci.provider === 'google'
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Google Calendar not connected' });
+    }
+
+    // Don't send tokens to frontend
+    const { accessToken, refreshToken, ...safeIntegration } = integration;
+    res.json({ integration: safeIntegration });
+  } catch (error) {
+    console.error('Get Google integration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/calendar/google/disconnect', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const integrationIndex = calendarIntegrations.findIndex(
+      ci => ci.userId === userId && ci.provider === 'google'
+    );
+
+    if (integrationIndex === -1) {
+      return res.status(404).json({ message: 'Google Calendar not connected' });
+    }
+
+    calendarIntegrations.splice(integrationIndex, 1);
+    res.json({ message: 'Google Calendar disconnected successfully' });
+  } catch (error) {
+    console.error('Google disconnect error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.get('/api/calendar/google/events', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { from, to } = req.query;
+
+    const integration = calendarIntegrations.find(
+      ci => ci.userId === userId && ci.provider === 'google'
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Google Calendar not connected' });
+    }
+
+    // Set OAuth credentials
+    oauth2Client.setCredentials({
+      access_token: integration.accessToken,
+      refresh_token: integration.refreshToken,
+      expiry_date: new Date(integration.expiresAt).getTime()
+    });
+
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const response = await calendar.events.list({
+      calendarId: integration.calendarId,
+      timeMin: from,
+      timeMax: to,
+      singleEvents: true,
+      orderBy: 'startTime'
+    });
+
+    const events = response.data.items.map(event => ({
+      id: event.id,
+      summary: event.summary,
+      description: event.description,
+      start: event.start.dateTime || event.start.date,
+      end: event.end.dateTime || event.end.date,
+      location: event.location,
+      attendees: event.attendees?.map(a => a.email) || [],
+      source: 'google',
+      externalId: event.id,
+      calendarId: integration.calendarId
+    }));
+
+    res.json({ events });
+  } catch (error) {
+    console.error('Fetch Google events error:', error);
+    res.status(500).json({ message: 'Failed to fetch Google Calendar events' });
+  }
+});
+
+app.post('/api/calendar/google/sync', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { event } = req.body;
+
+    const integration = calendarIntegrations.find(
+      ci => ci.userId === userId && ci.provider === 'google'
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Google Calendar not connected' });
+    }
+
+    // Set OAuth credentials
+    oauth2Client.setCredentials({
+      access_token: integration.accessToken,
+      refresh_token: integration.refreshToken,
+      expiry_date: new Date(integration.expiresAt).getTime()
+    });
+
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    const googleEvent = {
+      summary: event.title,
+      description: event.description,
+      location: event.location,
+      start: {
+        dateTime: `${event.date}T${event.startTime}:00`,
+        timeZone: 'America/Los_Angeles'
+      },
+      end: {
+        dateTime: `${event.date}T${event.endTime}:00`,
+        timeZone: 'America/Los_Angeles'
+      },
+      attendees: event.attendees?.map(email => ({ email })) || []
+    };
+
+    const response = await calendar.events.insert({
+      calendarId: integration.calendarId,
+      resource: googleEvent
+    });
+
+    res.json({
+      message: 'Event synced to Google Calendar',
+      eventId: response.data.id
+    });
+  } catch (error) {
+    console.error('Sync to Google Calendar error:', error);
+    res.status(500).json({ message: 'Failed to sync event to Google Calendar' });
+  }
+});
+
+// Get all calendar integrations
+app.get('/api/calendar/integrations', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userIntegrations = calendarIntegrations
+      .filter(ci => ci.userId === userId)
+      .map(({ accessToken, refreshToken, ...integration }) => integration);
+
+    res.json({ integrations: userIntegrations });
+  } catch (error) {
+    console.error('Get integrations error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// iCal/CalDAV Routes
+app.post('/api/calendar/ical/connect', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { serverUrl, username, password, calendarName } = req.body;
+
+    if (!serverUrl || !username || !password) {
+      return res.status(400).json({ message: 'Server URL, username, and password are required' });
+    }
+
+    // Test CalDAV connection
+    try {
+      const response = await axios({
+        method: 'PROPFIND',
+        url: serverUrl,
+        auth: { username, password },
+        headers: {
+          'Content-Type': 'application/xml',
+          'Depth': '1'
+        }
+      });
+
+      if (response.status !== 207) {
+        throw new Error('CalDAV connection test failed');
+      }
+    } catch (error) {
+      return res.status(400).json({
+        message: 'Failed to connect to CalDAV server. Please check your credentials.'
+      });
+    }
+
+    // Remove existing iCal integration for this user
+    const existingIndex = calendarIntegrations.findIndex(
+      ci => ci.userId === userId && ci.provider === 'ical'
+    );
+    if (existingIndex > -1) {
+      calendarIntegrations.splice(existingIndex, 1);
+    }
+
+    // Create new integration (store credentials encrypted in production!)
+    const integration = {
+      id: Date.now().toString(),
+      userId,
+      provider: 'ical',
+      accountEmail: username,
+      isConnected: true,
+      accessToken: Buffer.from(`${username}:${password}`).toString('base64'), // Basic auth encoded
+      calendarId: serverUrl,
+      calendarName: calendarName || 'iCal Calendar',
+      lastSync: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    calendarIntegrations.push(integration);
+
+    const { accessToken, ...safeIntegration } = integration;
+    res.json({
+      message: 'iCal calendar connected successfully',
+      integration: safeIntegration
+    });
+  } catch (error) {
+    console.error('iCal connect error:', error);
+    res.status(500).json({ message: 'Failed to connect to iCal calendar' });
+  }
+});
+
+app.get('/api/calendar/ical/integration', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const integration = calendarIntegrations.find(
+      ci => ci.userId === userId && ci.provider === 'ical'
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: 'iCal calendar not connected' });
+    }
+
+    const { accessToken, ...safeIntegration } = integration;
+    res.json({ integration: safeIntegration });
+  } catch (error) {
+    console.error('Get iCal integration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/calendar/ical/disconnect', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const integrationIndex = calendarIntegrations.findIndex(
+      ci => ci.userId === userId && ci.provider === 'ical'
+    );
+
+    if (integrationIndex === -1) {
+      return res.status(404).json({ message: 'iCal calendar not connected' });
+    }
+
+    calendarIntegrations.splice(integrationIndex, 1);
+    res.json({ message: 'iCal calendar disconnected successfully' });
+  } catch (error) {
+    console.error('iCal disconnect error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.get('/api/calendar/ical/events', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { from, to } = req.query;
+
+    const integration = calendarIntegrations.find(
+      ci => ci.userId === userId && ci.provider === 'ical'
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: 'iCal calendar not connected' });
+    }
+
+    // Decode basic auth credentials
+    const credentials = Buffer.from(integration.accessToken, 'base64').toString('utf-8');
+    const [username, password] = credentials.split(':');
+
+    // Fetch calendar data via CalDAV
+    const response = await axios({
+      method: 'REPORT',
+      url: integration.calendarId,
+      auth: { username, password },
+      headers: {
+        'Content-Type': 'application/xml',
+        'Depth': '1'
+      },
+      data: `<?xml version="1.0" encoding="utf-8" ?>
+        <C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+          <D:prop>
+            <D:getetag/>
+            <C:calendar-data/>
+          </D:prop>
+          <C:filter>
+            <C:comp-filter name="VCALENDAR">
+              <C:comp-filter name="VEVENT">
+                <C:time-range start="${new Date(from).toISOString().replace(/[-:]/g, '').split('.')[0]}Z"
+                              end="${new Date(to).toISOString().replace(/[-:]/g, '').split('.')[0]}Z"/>
+              </C:comp-filter>
+            </C:comp-filter>
+          </C:filter>
+        </C:calendar-query>`
+    });
+
+    // Parse iCal data (simplified - in production use ical.js library properly)
+    const events = [];
+    // Note: This is a simplified placeholder. Full implementation would use ical.js
+    // to properly parse the VCALENDAR data from the response
+
+    res.json({ events });
+  } catch (error) {
+    console.error('Fetch iCal events error:', error);
+    res.status(500).json({ message: 'Failed to fetch iCal events' });
+  }
+});
+
+app.post('/api/calendar/ical/sync', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { event } = req.body;
+
+    const integration = calendarIntegrations.find(
+      ci => ci.userId === userId && ci.provider === 'ical'
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: 'iCal calendar not connected' });
+    }
+
+    // Decode basic auth credentials
+    const credentials = Buffer.from(integration.accessToken, 'base64').toString('utf-8');
+    const [username, password] = credentials.split(':');
+
+    // Create iCal format event
+    const icalEvent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Blue Moon Scheduler//EN
+BEGIN:VEVENT
+UID:${Date.now()}@bluemoon
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTSTART:${event.date.replace(/-/g, '')}T${event.startTime.replace(/:/g, '')}00Z
+DTEND:${event.date.replace(/-/g, '')}T${event.endTime.replace(/:/g, '')}00Z
+SUMMARY:${event.title}
+DESCRIPTION:${event.description || ''}
+LOCATION:${event.location || ''}
+END:VEVENT
+END:VCALENDAR`;
+
+    // Send to CalDAV server
+    await axios({
+      method: 'PUT',
+      url: `${integration.calendarId}/${Date.now()}.ics`,
+      auth: { username, password },
+      headers: {
+        'Content-Type': 'text/calendar',
+      },
+      data: icalEvent
+    });
+
+    res.json({ message: 'Event synced to iCal calendar' });
+  } catch (error) {
+    console.error('Sync to iCal error:', error);
+    res.status(500).json({ message: 'Failed to sync event to iCal calendar' });
+  }
 });
 
 app.listen(PORT, () => {
