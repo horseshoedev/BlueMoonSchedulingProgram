@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAppContext } from './hooks/useAppContext';
@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 const AppContent: React.FC = () => {
   const { activeTab, theme } = useAppContext();
   const currentTheme = themeClasses[theme];
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -35,11 +36,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${currentTheme.bg}`}>
-      <Header />
-      <div className="max-w-7xl mx-auto px-4 py-6 h-full">
-        <div className="flex flex-row gap-6 h-full min-h-[600px]">
-          <Sidebar />
-          <div className="flex-1">
+      <Header onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6 h-full">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full min-h-[600px]">
+          <Sidebar isMobileMenuOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+          <div className="flex-1 w-full">
             {renderContent()}
           </div>
         </div>

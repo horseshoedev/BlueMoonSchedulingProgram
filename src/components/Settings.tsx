@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { useAuth } from '../hooks/useAuth';
 import { themeClasses } from '../utils/theme';
 import { formatTime } from '../utils/time';
-import { User, Mail, Lock, Camera, Save, Eye, EyeOff, X } from 'lucide-react';
+import { User, Mail, Lock, Camera, Save, Eye, EyeOff, X, RefreshCw } from 'lucide-react';
 import ProfilePicture from './ProfilePicture';
+import CalendarSyncModal from './CalendarSyncModal';
+import { googleCalendarService, iCalService, getAllIntegrations } from '../services/calendar';
+import { CalendarIntegration } from '../types';
 
 const Settings: React.FC = () => {
   const { user, setUser, theme, setTheme } = useAppContext();
@@ -38,6 +41,12 @@ const Settings: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
+
+  // Calendar integration state
+  const [calendarIntegrations, setCalendarIntegrations] = useState<CalendarIntegration[]>([]);
+  const [showICalModal, setShowICalModal] = useState(false);
+  const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
 
   const handleProfileChange = (field: string, value: string) => {
     setProfileData(prev => ({
@@ -147,15 +156,97 @@ const Settings: React.FC = () => {
     });
   };
 
-  const handleDisconnectCalendar = () => {
-    // For now, just show an alert - this would disconnect from Google Calendar
-    alert('Disconnect Google Calendar - this would remove calendar integration');
+  // Load calendar integrations on mount
+  useEffect(() => {
+    loadCalendarIntegrations();
+  }, []);
+
+  // Listen for OAuth popup messages
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'google-oauth-success') {
+        loadCalendarIntegrations();
+        setMessage({ type: 'success', text: 'Google Calendar connected successfully!' });
+      } else if (event.data.type === 'google-oauth-error') {
+        setCalendarError(event.data.error || 'Failed to connect Google Calendar');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const loadCalendarIntegrations = async () => {
+    setIsLoadingCalendars(true);
+    setCalendarError(null);
+
+    try {
+      const integrations = await getAllIntegrations();
+      setCalendarIntegrations(integrations);
+    } catch (error) {
+      console.error('Failed to load calendar integrations:', error);
+      setCalendarError('Failed to load calendar integrations');
+    } finally {
+      setIsLoadingCalendars(false);
+    }
   };
 
-  const handleAddCalendar = () => {
-    // For now, just show an alert - this would open calendar connection flow
-    alert('Add Calendar - this would open the calendar integration setup');
+  const handleConnectGoogle = async () => {
+    try {
+      setCalendarError(null);
+      const authUrl = await googleCalendarService.getAuthUrl();
+
+      // Open OAuth flow in popup
+      const width = 500;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      window.open(
+        authUrl,
+        'Google Calendar Authorization',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+    } catch (error) {
+      setCalendarError(error instanceof Error ? error.message : 'Failed to initiate Google OAuth');
+    }
   };
+
+  const handleDisconnectGoogle = async () => {
+    try {
+      setCalendarError(null);
+      await googleCalendarService.disconnect();
+      await loadCalendarIntegrations();
+      setMessage({ type: 'success', text: 'Google Calendar disconnected successfully!' });
+    } catch (error) {
+      setCalendarError(error instanceof Error ? error.message : 'Failed to disconnect Google Calendar');
+    }
+  };
+
+  const handleConnectICal = async (config: any) => {
+    try {
+      setCalendarError(null);
+      await iCalService.connect(config);
+      await loadCalendarIntegrations();
+      setMessage({ type: 'success', text: 'iCal calendar connected successfully!' });
+    } catch (error) {
+      throw error; // Re-throw to be caught by modal
+    }
+  };
+
+  const handleDisconnectICal = async () => {
+    try {
+      setCalendarError(null);
+      await iCalService.disconnect();
+      await loadCalendarIntegrations();
+      setMessage({ type: 'success', text: 'iCal calendar disconnected successfully!' });
+    } catch (error) {
+      setCalendarError(error instanceof Error ? error.message : 'Failed to disconnect iCal calendar');
+    }
+  };
+
+  const googleIntegration = calendarIntegrations.find(ci => ci.provider === 'google');
+  const iCalIntegration = calendarIntegrations.find(ci => ci.provider === 'ical');
 
   return (
     <div className="space-y-6">
@@ -413,29 +504,107 @@ const Settings: React.FC = () => {
         </div>
 
         <div>
-          <h3 className={`font-semibold mb-3 ${currentTheme.text}`}>Calendar Integration</h3>
-          <div className="space-y-3">
-            <div className={`flex items-center justify-between p-3 ${theme === 'light' ? 'bg-gray-50' : 'bg-gray-700'} rounded`}>
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-500 rounded mr-3"></div>
-                <div>
-                  <p className={`font-medium ${currentTheme.text}`}>Google Calendar</p>
-                  <p className={`text-sm ${currentTheme.textSecondary}`}>Connected</p>
-                </div>
-              </div>
-              <button
-                onClick={handleDisconnectCalendar}
-                className="px-3 py-1 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200 transition-colors"
-              >
-                Disconnect
-              </button>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className={`font-semibold ${currentTheme.text}`}>Calendar Integration</h3>
+            {isLoadingCalendars && (
+              <RefreshCw className={`h-4 w-4 ${currentTheme.textSecondary} animate-spin`} />
+            )}
+          </div>
+
+          {calendarError && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
+              {calendarError}
             </div>
-            <button
-              onClick={handleAddCalendar}
-              className={`w-full px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.hover} ${currentTheme.text} transition-colors`}
-            >
-              + Add Calendar
-            </button>
+          )}
+
+          <div className="space-y-3">
+            {/* Google Calendar */}
+            {googleIntegration ? (
+              <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 ${theme === 'light' ? 'bg-blue-50 border-blue-200' : 'bg-blue-900 border-blue-700'} border rounded`}>
+                <div className="flex items-center min-w-0">
+                  <div className="w-8 h-8 bg-blue-500 rounded mr-3 flex-shrink-0 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,4H18V2H16V4H8V2H6V4H5A2,2 0 0,0 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20Z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`font-medium ${currentTheme.text} truncate`}>Google Calendar</p>
+                    <p className={`text-xs sm:text-sm ${currentTheme.textSecondary} truncate`}>
+                      {googleIntegration.accountEmail}
+                    </p>
+                    {googleIntegration.lastSync && (
+                      <p className={`text-xs ${currentTheme.textMuted}`}>
+                        Last synced: {new Date(googleIntegration.lastSync).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={handleDisconnectGoogle}
+                  className="px-3 py-1.5 bg-red-100 text-red-600 text-xs sm:text-sm rounded hover:bg-red-200 transition-colors whitespace-nowrap"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleConnectGoogle}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed ${currentTheme.border} rounded ${currentTheme.hover} ${currentTheme.text} transition-colors`}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,4H18V2H16V4H8V2H6V4H5A2,2 0 0,0 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20Z" />
+                </svg>
+                Connect Google Calendar
+              </button>
+            )}
+
+            {/* iCal/CalDAV */}
+            {iCalIntegration ? (
+              <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 ${theme === 'light' ? 'bg-purple-50 border-purple-200' : 'bg-purple-900 border-purple-700'} border rounded`}>
+                <div className="flex items-center min-w-0">
+                  <div className="w-8 h-8 bg-purple-500 rounded mr-3 flex-shrink-0 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`font-medium ${currentTheme.text} truncate`}>
+                      {iCalIntegration.calendarName || 'iCal Calendar'}
+                    </p>
+                    <p className={`text-xs sm:text-sm ${currentTheme.textSecondary} truncate`}>
+                      {iCalIntegration.accountEmail}
+                    </p>
+                    {iCalIntegration.lastSync && (
+                      <p className={`text-xs ${currentTheme.textMuted}`}>
+                        Last synced: {new Date(iCalIntegration.lastSync).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={handleDisconnectICal}
+                  className="px-3 py-1.5 bg-red-100 text-red-600 text-xs sm:text-sm rounded hover:bg-red-200 transition-colors whitespace-nowrap"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowICalModal(true)}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed ${currentTheme.border} rounded ${currentTheme.hover} ${currentTheme.text} transition-colors`}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+                Connect iCal/CalDAV
+              </button>
+            )}
+
+            {calendarIntegrations.length === 0 && (
+              <p className={`text-xs ${currentTheme.textMuted} text-center py-2`}>
+                No calendars connected. Connect your calendar to sync events automatically.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -488,6 +657,14 @@ const Settings: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* iCal Connection Modal */}
+      <CalendarSyncModal
+        isOpen={showICalModal}
+        onClose={() => setShowICalModal(false)}
+        onConnect={handleConnectICal}
+        theme={theme}
+      />
     </div>
   );
 };

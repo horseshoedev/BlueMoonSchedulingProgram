@@ -64,21 +64,23 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat, index) => (
-          <div key={index} className={`${theme === 'light' ? `bg-${stat.color}-50 border-${stat.color}-200` : `bg-${stat.color}-900 border-${stat.color}-700`} border rounded-lg p-4`}>
+          <div key={index} className={`${theme === 'light' ? `bg-${stat.color}-50 border-${stat.color}-200` : `bg-${stat.color}-900 border-${stat.color}-700`} border rounded-lg p-3 sm:p-4`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={`${theme === 'light' ? `text-${stat.color}-600` : `text-${stat.color}-400`} text-sm font-medium`}>
+                <p className={`${theme === 'light' ? `text-${stat.color}-600` : `text-${stat.color}-400`} text-xs sm:text-sm font-medium`}>
                   {stat.label}
                 </p>
-                <p className={`text-2xl font-bold ${theme === 'light' ? `text-${stat.color}-800` : `text-${stat.color}-300`}`}>
+                <p className={`text-xl sm:text-2xl font-bold ${theme === 'light' ? `text-${stat.color}-800` : `text-${stat.color}-300`}`}>
                   {stat.value}
                 </p>
               </div>
-              {stat.icon}
+              <div className="scale-75 sm:scale-100">
+                {stat.icon}
+              </div>
             </div>
           </div>
         ))}
@@ -86,30 +88,30 @@ const Dashboard: React.FC = () => {
 
       {/* Pending Invitations */}
       {invitations.length > 0 && (
-        <div className={`${theme === 'light' ? 'bg-yellow-50 border-yellow-200' : 'bg-yellow-900 border-yellow-700'} border rounded-lg p-4`}>
+        <div className={`${theme === 'light' ? 'bg-yellow-50 border-yellow-200' : 'bg-yellow-900 border-yellow-700'} border rounded-lg p-3 sm:p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className={`font-semibold ${theme === 'light' ? 'text-yellow-800' : 'text-yellow-300'} flex items-center`}>
+            <h3 className={`text-sm sm:text-base font-semibold ${theme === 'light' ? 'text-yellow-800' : 'text-yellow-300'} flex items-center`}>
               <Bell className="h-4 w-4 mr-2" />
               Pending Invitations ({invitations.length})
             </h3>
           </div>
           <div className="space-y-2">
             {invitations.map(invite => (
-              <div key={invite.id} className={`flex items-center justify-between ${currentTheme.cardBg} p-3 rounded border ${currentTheme.border}`}>
-                <div>
-                  <p className={`font-medium ${currentTheme.text}`}>{invite.from}</p>
-                  <p className={`text-sm ${currentTheme.textSecondary}`}>{invite.group} • {invite.type}</p>
+              <div key={invite.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 ${currentTheme.cardBg} p-3 rounded border ${currentTheme.border}`}>
+                <div className="min-w-0">
+                  <p className={`font-medium ${currentTheme.text} truncate`}>{invite.from}</p>
+                  <p className={`text-xs sm:text-sm ${currentTheme.textSecondary} truncate`}>{invite.group} • {invite.type}</p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-2 sm:gap-2 sm:flex-shrink-0">
                   <button
                     onClick={() => handleAcceptInvitation(invite.id)}
-                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-1 bg-green-600 text-white text-xs sm:text-sm rounded hover:bg-green-700 transition-colors"
                   >
                     Accept
                   </button>
                   <button
                     onClick={() => handleDeclineInvitation(invite.id)}
-                    className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400 transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-1 bg-gray-300 text-gray-700 text-xs sm:text-sm rounded hover:bg-gray-400 transition-colors"
                   >
                     Decline
                   </button>
@@ -121,21 +123,23 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {quickActions.map((action, index) => (
-          <button 
+          <button
             key={index}
             onClick={action.action}
-            className={`flex items-center justify-between p-4 ${currentTheme.cardBg} border ${currentTheme.border} rounded-lg ${currentTheme.hover} transition-colors`}
+            className={`flex items-center justify-between p-3 sm:p-4 ${currentTheme.cardBg} border ${currentTheme.border} rounded-lg ${currentTheme.hover} transition-colors`}
           >
-            <div className="flex items-center">
-              {action.icon}
-              <div className="text-left">
-                <p className={`font-medium ${currentTheme.text}`}>{action.title}</p>
-                <p className={`text-sm ${currentTheme.textSecondary}`}>{action.description}</p>
+            <div className="flex items-center min-w-0 flex-1">
+              <div className="flex-shrink-0">
+                {action.icon}
+              </div>
+              <div className="text-left min-w-0">
+                <p className={`font-medium ${currentTheme.text} text-sm sm:text-base`}>{action.title}</p>
+                <p className={`text-xs sm:text-sm ${currentTheme.textSecondary} truncate`}>{action.description}</p>
               </div>
             </div>
-            <ChevronRight className={`h-5 w-5 ${currentTheme.textMuted}`} />
+            <ChevronRight className={`h-5 w-5 ${currentTheme.textMuted} flex-shrink-0 ml-2`} />
           </button>
         ))}
       </div>
