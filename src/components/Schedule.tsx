@@ -5,6 +5,7 @@ import { themeClasses } from '../utils/theme';
 import { formatTimeSlot } from '../utils/time';
 import { ScheduleEvent } from '../types';
 import ScheduleForm from './ScheduleForm';
+import EventDetailModal from './EventDetailModal';
 
 const Schedule: React.FC = () => {
   const { theme, user } = useAppContext();
@@ -14,6 +15,8 @@ const Schedule: React.FC = () => {
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [filterType, setFilterType] = useState<string>('all');
   const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
 
   // Mock schedule data - in a real app this would come from context/API
   const [scheduleEvents] = useState<ScheduleEvent[]>([
@@ -206,6 +209,16 @@ const Schedule: React.FC = () => {
     setShowScheduleForm(false);
   };
 
+  const handleEventClick = (event: ScheduleEvent) => {
+    setSelectedEvent(event);
+    setShowEventModal(true);
+  };
+
+  const handleCloseEventModal = () => {
+    setShowEventModal(false);
+    setSelectedEvent(null);
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -303,7 +316,11 @@ const Schedule: React.FC = () => {
           <div className="space-y-3">
             {getEventsForDate(currentDate).length > 0 ? (
               getEventsForDate(currentDate).map((event) => (
-                <div key={event.id} className={`p-4 border ${currentTheme.border} rounded-lg`}>
+                <div
+                  key={event.id}
+                  onClick={() => handleEventClick(event)}
+                  className={`p-4 border ${currentTheme.border} rounded-lg cursor-pointer hover:shadow-md transition-shadow ${currentTheme.hover}`}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
@@ -385,7 +402,8 @@ const Schedule: React.FC = () => {
                     {dayEvents.map((event) => (
                       <div
                         key={event.id}
-                        className={`p-1.5 sm:p-2 rounded text-xs border ${getEventTypeColor(event.type)}`}
+                        onClick={() => handleEventClick(event)}
+                        className={`p-1.5 sm:p-2 rounded text-xs border cursor-pointer hover:opacity-90 transition-opacity ${getEventTypeColor(event.type)}`}
                       >
                         <div className="font-medium break-words">{event.title}</div>
                         <div className="flex items-start mt-1">
@@ -460,7 +478,8 @@ const Schedule: React.FC = () => {
                     {dayEvents.slice(0, 3).map((event) => (
                       <div
                         key={event.id}
-                        className={`px-1 py-0.5 rounded text-[10px] sm:text-xs border truncate ${getEventTypeColor(event.type)}`}
+                        onClick={() => handleEventClick(event)}
+                        className={`px-1 py-0.5 rounded text-[10px] sm:text-xs border truncate cursor-pointer hover:opacity-90 transition-opacity ${getEventTypeColor(event.type)}`}
                         title={`${event.title} (${event.startTime}-${event.endTime})`}
                       >
                         {event.title}
@@ -484,7 +503,11 @@ const Schedule: React.FC = () => {
         <h3 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Upcoming Events</h3>
         <div className="space-y-3">
           {filteredEvents.slice(0, 5).map((event) => (
-            <div key={event.id} className={`p-3 border ${currentTheme.border} rounded-lg`}>
+            <div
+              key={event.id}
+              onClick={() => handleEventClick(event)}
+              className={`p-3 border ${currentTheme.border} rounded-lg cursor-pointer hover:shadow-md transition-shadow ${currentTheme.hover}`}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
@@ -533,6 +556,15 @@ const Schedule: React.FC = () => {
         onClose={() => setShowScheduleForm(false)}
         onSuccess={handleEventCreated}
         theme={theme}
+      />
+
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        isOpen={showEventModal}
+        onClose={handleCloseEventModal}
+        event={selectedEvent}
+        theme={theme}
+        timeFormat={user.preferences.timeFormat}
       />
     </div>
   );

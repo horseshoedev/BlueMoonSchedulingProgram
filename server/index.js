@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { google } = require('googleapis');
 const axios = require('axios');
+const { sendProposalEmail, sendResponseConfirmation, generateResponseToken } = require('./services/emailService');
 require('dotenv').config();
 
 const app = express();
@@ -41,6 +42,7 @@ const groups = [];
 const groupMembers = []; // { groupId, userId, role, joinedAt }
 const invitations = []; // { id, fromUserId, toUserId, groupId, status, createdAt }
 const calendarIntegrations = []; // { id, userId, provider, tokens, calendarId, etc. }
+const meetingProposals = []; // { id, groupId, proposedBy, proposedByName, title, description, proposedDate, proposedTime, groupName, responses: [{ userId, userName, userEmail, response, alternateDate, alternateTime, respondedAt, token }], status, createdAt }
 
 // Initialize test user
 (async () => {
@@ -1289,6 +1291,336 @@ END:VCALENDAR`;
   } catch (error) {
     console.error('Sync to iCal error:', error);
     res.status(500).json({ message: 'Failed to sync event to iCal calendar' });
+  }
+});
+
+// ============================================================================
+// Meeting Proposals API
+// ============================================================================
+
+// Create and send meeting proposal
+app.post(
+  '/api/meetings/propose',
+  authenticateToken,
+  sanitizeInput,
+  [
+    body('groupId').notEmpty().withMessage('Group ID is required'),
+    body('title').trim().notEmpty().withMessage('Title is required'),
+    body('proposedDate').isISO8601().withMessage('Valid date is required'),
+    body('proposedTime').notEmpty().withMessage('Time is required'),
+    body('groupName').notEmpty().withMessage('Group name is required'),
+    body('memberEmails').isArray({ min: 1 }).withMessage('At least one member email required')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { groupId, title, description, proposedDate, proposedTime, groupName, memberEmails } = req.body;
+      const user = users.find(u => u.id === req.user.id);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Create proposal
+      const proposalId = Date.now().toString();
+      const proposal = {
+        id: proposalId,
+        groupId,
+        proposedBy: user.id,
+        proposedByName: user.name,
+        title,
+        description: description || '',
+        proposedDate,
+        proposedTime,
+        groupName,
+        responses: [],
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      // Generate tokens and send emails to all members
+      const emailPromises = memberEmails.map(async (memberEmail) => {
+        const token = generateResponseToken();
+        const memberUser = users.find(u => u.email === memberEmail);
+
+        // Add response placeholder
+        proposal.responses.push({
+          userId: memberUser?.id || null,
+          userName: memberUser?.name || memberEmail,
+          userEmail: memberEmail,
+          response: 'pending',
+          token,
+          respondedAt: null
+        });
+
+        // Send email
+        try {
+          await sendProposalEmail(
+            memberEmail,
+            memberUser?.name || memberEmail,
+            proposal,
+            token
+          );
+        } catch (emailError) {
+          console.error(`Failed to send to ${memberEmail}:`, emailError);
+        }
+      });
+
+      await Promise.all(emailPromises);
+
+      meetingProposals.push(proposal);
+
+      res.status(201).json({
+        message: 'Meeting proposal created and emails sent',
+        proposal: {
+          ...proposal,
+          responses: proposal.responses.map(r => ({
+            ...r,
+            token: undefined // Don't expose tokens in response
+          }))
+        }
+      });
+    } catch (error) {
+      console.error('Proposal creation error:', error);
+      res.status(500).json({ message: 'Failed to create proposal' });
+    }
+  }
+);
+
+// Get proposals for a group
+app.get('/api/meetings/proposals/:groupId', authenticateToken, (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const proposals = meetingProposals.filter(p => p.groupId === groupId);
+
+    // Remove tokens from responses
+    const sanitizedProposals = proposals.map(p => ({
+      ...p,
+      responses: p.responses.map(r => ({
+        userId: r.userId,
+        userName: r.userName,
+        userEmail: r.userEmail,
+        response: r.response,
+        alternateDate: r.alternateDate,
+        alternateTime: r.alternateTime,
+        respondedAt: r.respondedAt
+      }))
+    }));
+
+    res.json({ proposals: sanitizedProposals });
+  } catch (error) {
+    console.error('Get proposals error:', error);
+    res.status(500).json({ message: 'Failed to get proposals' });
+  }
+});
+
+// Handle Yes/No response (public endpoint, uses token)
+app.get('/api/meetings/respond', async (req, res) => {
+  try {
+    const { token, response } = req.query;
+
+    if (!token || !response) {
+      return res.status(400).send('<h1>Invalid request</h1><p>Missing token or response.</p>');
+    }
+
+    if (!['yes', 'no'].includes(response)) {
+      return res.status(400).send('<h1>Invalid response</h1><p>Response must be "yes" or "no".</p>');
+    }
+
+    // Find proposal with this token
+    let foundProposal = null;
+    let foundResponse = null;
+
+    for (const proposal of meetingProposals) {
+      const responseEntry = proposal.responses.find(r => r.token === token);
+      if (responseEntry) {
+        foundProposal = proposal;
+        foundResponse = responseEntry;
+        break;
+      }
+    }
+
+    if (!foundProposal || !foundResponse) {
+      return res.status(404).send('<h1>Proposal not found</h1><p>This link may have expired or is invalid.</p>');
+    }
+
+    // Update response
+    foundResponse.response = response;
+    foundResponse.respondedAt = new Date().toISOString();
+
+    // Send confirmation email
+    try {
+      await sendResponseConfirmation(
+        foundResponse.userEmail,
+        foundResponse.userName,
+        foundProposal,
+        response
+      );
+    } catch (emailError) {
+      console.error('Failed to send confirmation:', emailError);
+    }
+
+    // Send success HTML response
+    const responseText = response === 'yes' ? '✅ You accepted the invitation!' : '❌ You declined the invitation.';
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Response Recorded</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+          .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+          h1 { color: #333; }
+          p { color: #666; line-height: 1.6; }
+          .emoji { font-size: 48px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="emoji">${response === 'yes' ? '✅' : '❌'}</div>
+          <h1>Response Recorded!</h1>
+          <p>${responseText}</p>
+          <p><strong>Meeting:</strong> ${foundProposal.title}</p>
+          <p><strong>Date:</strong> ${new Date(foundProposal.proposedDate).toLocaleDateString()}</p>
+          <p><strong>Time:</strong> ${foundProposal.proposedTime}</p>
+          <p style="margin-top: 30px; color: #999; font-size: 14px;">The organizer has been notified of your response.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Response handling error:', error);
+    res.status(500).send('<h1>Error</h1><p>Something went wrong. Please try again.</p>');
+  }
+});
+
+// Handle alternate time proposal (receives POST with alternate date/time)
+app.post('/api/meetings/propose-alternate', async (req, res) => {
+  try {
+    const { token, alternateDate, alternateTime, message } = req.body;
+
+    if (!token || !alternateDate || !alternateTime) {
+      return res.status(400).json({ message: 'Token, alternate date, and time are required' });
+    }
+
+    // Find proposal with this token
+    let foundProposal = null;
+    let foundResponse = null;
+
+    for (const proposal of meetingProposals) {
+      const responseEntry = proposal.responses.find(r => r.token === token);
+      if (responseEntry) {
+        foundProposal = proposal;
+        foundResponse = responseEntry;
+        break;
+      }
+    }
+
+    if (!foundProposal || !foundResponse) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    // Update response with alternate suggestion
+    foundResponse.response = 'alternate';
+    foundResponse.alternateDate = alternateDate;
+    foundResponse.alternateTime = alternateTime;
+    foundResponse.alternateMessage = message || '';
+    foundResponse.respondedAt = new Date().toISOString();
+
+    // Send confirmation email
+    try {
+      await sendResponseConfirmation(
+        foundResponse.userEmail,
+        foundResponse.userName,
+        foundProposal,
+        'alternate'
+      );
+    } catch (emailError) {
+      console.error('Failed to send confirmation:', emailError);
+    }
+
+    res.json({
+      message: 'Alternate time proposal recorded',
+      proposal: {
+        id: foundProposal.id,
+        title: foundProposal.title
+      }
+    });
+  } catch (error) {
+    console.error('Alternate proposal error:', error);
+    res.status(500).json({ message: 'Failed to record alternate proposal' });
+  }
+});
+
+// Get proposal by token (for response page)
+app.get('/api/meetings/proposal-by-token/:token', (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Find proposal with this token
+    for (const proposal of meetingProposals) {
+      const responseEntry = proposal.responses.find(r => r.token === token);
+      if (responseEntry) {
+        return res.json({
+          proposal: {
+            id: proposal.id,
+            title: proposal.title,
+            description: proposal.description,
+            proposedDate: proposal.proposedDate,
+            proposedTime: proposal.proposedTime,
+            groupName: proposal.groupName,
+            proposedByName: proposal.proposedByName
+          },
+          userResponse: {
+            userName: responseEntry.userName,
+            currentResponse: responseEntry.response
+          }
+        });
+      }
+    }
+
+    res.status(404).json({ message: 'Proposal not found' });
+  } catch (error) {
+    console.error('Get proposal by token error:', error);
+    res.status(500).json({ message: 'Failed to get proposal' });
+  }
+});
+
+// Get responses for a specific proposal
+app.get('/api/meetings/proposals/:id/responses', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    const proposal = meetingProposals.find(p => p.id === id);
+
+    if (!proposal) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    // Check if user is the proposer or a group member
+    if (proposal.proposedBy !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to view responses' });
+    }
+
+    // Return responses without tokens
+    const sanitizedResponses = proposal.responses.map(r => ({
+      userId: r.userId,
+      userName: r.userName,
+      userEmail: r.userEmail,
+      response: r.response,
+      alternateDate: r.alternateDate,
+      alternateTime: r.alternateTime,
+      alternateMessage: r.alternateMessage,
+      respondedAt: r.respondedAt
+    }));
+
+    res.json({ responses: sanitizedResponses });
+  } catch (error) {
+    console.error('Get responses error:', error);
+    res.status(500).json({ message: 'Failed to get responses' });
   }
 });
 

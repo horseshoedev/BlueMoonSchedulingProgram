@@ -186,4 +186,41 @@ export interface CalendarSyncStatus {
   isSyncing: boolean;
   lastSyncTime?: string;
   error?: string;
+}
+
+// Meeting Proposal types
+export interface ProposalResponse {
+  userId: string | null;
+  userName: string;
+  userEmail: string;
+  response: 'pending' | 'yes' | 'no' | 'alternate';
+  alternateDate?: string;
+  alternateTime?: string;
+  alternateMessage?: string;
+  respondedAt: string | null;
+}
+
+export interface MeetingProposal {
+  id: string;
+  groupId: string | number;
+  proposedBy: string;
+  proposedByName: string;
+  title: string;
+  description?: string;
+  proposedDate: string;
+  proposedTime: string;
+  groupName: string;
+  responses: ProposalResponse[];
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+export interface ProposeMeetingData {
+  groupId: string | number;
+  groupName: string;
+  title: string;
+  description?: string;
+  proposedDate: string;
+  proposedTime: string;
+  memberEmails: string[];
 } 
