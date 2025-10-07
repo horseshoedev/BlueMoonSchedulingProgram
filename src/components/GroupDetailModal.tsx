@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Users, Calendar, Clock, MapPin, User, Crown, Settings, UserMinus, MessageSquare } from 'lucide-react';
+import { X, Users, Calendar, Clock, MapPin, User, Crown, Settings, UserMinus, MessageSquare, Send, ChevronDown } from 'lucide-react';
 import { themeClasses } from '../utils/theme';
 import { Group, ScheduleEvent } from '../types';
+import ProposeMeetingModal from './ProposeMeetingModal';
 
 interface GroupDetailModalProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
 }) => {
   const currentTheme = themeClasses[theme];
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'events'>('overview');
+  const [showScheduleDropdown, setShowScheduleDropdown] = useState(false);
+  const [showProposalModal, setShowProposalModal] = useState(false);
 
   // Mock data for group members - in a real app this would come from API
   const mockMembers = [
@@ -106,6 +109,15 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
       onScheduleMeeting(group.id, group.name);
       onClose();
     }
+  };
+
+  const handleProposeMeeting = () => {
+    setShowScheduleDropdown(false);
+    setShowProposalModal(true);
+  };
+
+  const handleCloseProposalModal = () => {
+    setShowProposalModal(false);
   };
 
   if (!isOpen || !group) return null;
@@ -376,13 +388,40 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
           >
             Leave Group
           </button>
-          <div className="space-x-3">
-            <button
-              onClick={handleScheduleMeeting}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-            >
-              Schedule Meeting
-            </button>
+          <div className="flex items-center space-x-3">
+            {/* Schedule Meeting Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowScheduleDropdown(!showScheduleDropdown)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule Meeting
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </button>
+
+              {showScheduleDropdown && (
+                <div className={`absolute bottom-full mb-2 right-0 ${currentTheme.cardBg} border ${currentTheme.border} rounded-lg shadow-lg py-2 min-w-[200px] z-10`}>
+                  <button
+                    onClick={() => {
+                      setShowScheduleDropdown(false);
+                      handleScheduleMeeting();
+                    }}
+                    className={`w-full px-4 py-2 text-left ${currentTheme.text} ${currentTheme.hover} flex items-center`}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Now
+                  </button>
+                  <button
+                    onClick={handleProposeMeeting}
+                    className={`w-full px-4 py-2 text-left ${currentTheme.text} ${currentTheme.hover} flex items-center`}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Propose Time via Email
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={onClose}
               className={`px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.text} ${currentTheme.hover} transition-colors`}
@@ -391,6 +430,18 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Proposal Modal */}
+        {group && (
+          <ProposeMeetingModal
+            isOpen={showProposalModal}
+            onClose={handleCloseProposalModal}
+            groupId={group.id}
+            groupName={group.name}
+            theme={theme}
+            memberEmails={mockMembers.map(m => m.name.toLowerCase().replace(' ', '.') + '@example.com')}
+          />
+        )}
       </div>
     </div>
   );

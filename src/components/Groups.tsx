@@ -112,7 +112,7 @@ const Groups: React.FC = () => {
             </div>
             
             {group.description && (
-              <p className={`text-sm ${currentTheme.textSecondary} mb-3`}>
+              <p className={`text-sm ${currentTheme.textSecondary} mb-3 line-clamp-2`}>
                 {group.description}
               </p>
             )}
@@ -128,10 +128,10 @@ const Groups: React.FC = () => {
               </p>
             </div>
             
-            <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => handleJoinLeave(group.id, group.isJoined || false)}
-                className={`flex-1 px-3 py-2 rounded flex items-center justify-center transition-colors text-sm ${
+                className={`w-full sm:w-auto sm:flex-1 px-3 py-2 rounded flex items-center justify-center transition-colors text-sm whitespace-nowrap ${
                   group.isJoined
                     ? `${theme === 'light' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-red-900 text-red-300 hover:bg-red-800'}`
                     : `${theme === 'light' ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-green-900 text-green-300 hover:bg-green-800'}`
@@ -151,10 +151,10 @@ const Groups: React.FC = () => {
                   </>
                 )}
               </button>
-              <div className="flex gap-2 sm:flex-1">
+              <div className="flex gap-2 flex-1 flex-wrap min-w-[200px]">
                 <button
                   onClick={() => handleViewDetails(group)}
-                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-purple-50 text-purple-600 hover:bg-purple-100' : 'bg-purple-900 text-purple-300 hover:bg-purple-800'} rounded flex items-center justify-center transition-colors text-sm`}
+                  className={`flex-1 min-w-[80px] px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-purple-50 text-purple-600 hover:bg-purple-100' : 'bg-purple-900 text-purple-300 hover:bg-purple-800'} rounded flex items-center justify-center transition-colors text-sm whitespace-nowrap`}
                   title="View group details"
                 >
                   <Eye className="h-4 w-4 sm:mr-1" />
@@ -162,14 +162,14 @@ const Groups: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleScheduleMeeting(group.id, group.name)}
-                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center transition-colors text-sm`}
+                  className={`flex-1 min-w-[80px] px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center transition-colors text-sm whitespace-nowrap`}
                 >
                   <Calendar className="h-4 w-4 sm:mr-1" />
                   <span className="hidden sm:inline">Schedule</span>
                 </button>
                 <button
                   onClick={() => handleShareGroup(group.name)}
-                  className={`px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-gray-50 text-gray-600 hover:bg-gray-100' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} rounded transition-colors flex items-center justify-center`}
+                  className={`px-2 sm:px-3 py-2 min-w-[40px] ${theme === 'light' ? 'bg-gray-50 text-gray-600 hover:bg-gray-100' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} rounded transition-colors flex items-center justify-center whitespace-nowrap`}
                   title="Share group"
                 >
                   <Share2 className="h-4 w-4" />
