@@ -28,6 +28,54 @@ const Groups: React.FC = () => {
 
   const groupTypes = ['all', 'work', 'personal', 'social'];
 
+  const getGroupTypeColor = (type: string) => {
+    switch (type) {
+      case 'work':
+        return theme === 'light'
+          ? 'bg-orange-100 text-orange-800 border border-orange-200'
+          : 'bg-orange-900 text-orange-300 border border-orange-700';
+      case 'personal':
+        return theme === 'light'
+          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+          : 'bg-purple-900 text-purple-300 border border-purple-700';
+      case 'social':
+        return theme === 'light'
+          ? 'bg-green-100 text-green-800 border border-green-200'
+          : 'bg-green-900 text-green-300 border border-green-700';
+      default:
+        return theme === 'light'
+          ? 'bg-gray-100 text-gray-800 border border-gray-200'
+          : 'bg-gray-700 text-gray-300 border border-gray-600';
+    }
+  };
+
+  const getFilterButtonColor = (type: string, isActive: boolean) => {
+    if (!isActive) {
+      return theme === 'light'
+        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        : 'bg-gray-700 text-gray-300 hover:bg-gray-600';
+    }
+
+    switch (type) {
+      case 'work':
+        return theme === 'light'
+          ? 'bg-orange-100 text-orange-700 border border-orange-200'
+          : 'bg-orange-900 text-orange-300 border border-orange-700';
+      case 'personal':
+        return theme === 'light'
+          ? 'bg-purple-100 text-purple-700 border border-purple-200'
+          : 'bg-purple-900 text-purple-300 border border-purple-700';
+      case 'social':
+        return theme === 'light'
+          ? 'bg-green-100 text-green-700 border border-green-200'
+          : 'bg-green-900 text-green-300 border border-green-700';
+      default: // 'all'
+        return theme === 'light'
+          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+          : 'bg-blue-900 text-blue-300 border border-blue-700';
+    }
+  };
+
   const handleCreateGroup = () => {
     setShowGroupForm(true);
   };
@@ -83,9 +131,7 @@ const Groups: React.FC = () => {
               key={type}
               onClick={() => setFilterType(type)}
               className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full capitalize transition-colors ${
-                filterType === type
-                  ? `${theme === 'light' ? 'bg-blue-100 text-blue-700' : 'bg-blue-900 text-blue-300'}`
-                  : `${theme === 'light' ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`
+                getFilterButtonColor(type, filterType === type)
               }`}
             >
               {type}
@@ -100,7 +146,7 @@ const Groups: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className={`font-semibold ${currentTheme.text}`}>{group.name}</h3>
               <div className="flex items-center space-x-2">
-                <span className={`px-2 py-1 ${theme === 'light' ? 'bg-gray-100 text-gray-600' : 'bg-gray-700 text-gray-300'} text-xs rounded capitalize`}>
+                <span className={`px-2 py-1 text-xs rounded capitalize ${getGroupTypeColor(group.type)}`}>
                   {group.type}
                 </span>
                 {group.isJoined && (

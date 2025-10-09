@@ -171,7 +171,7 @@ const Schedule: React.FC = () => {
   const getEventTypeColor = (type: string) => {
     switch (type) {
       case 'work':
-        return theme === 'light' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-blue-900 text-blue-300 border-blue-700';
+        return theme === 'light' ? 'bg-orange-100 text-orange-800 border-orange-200' : 'bg-orange-900 text-orange-300 border-orange-700';
       case 'personal':
         return theme === 'light' ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-purple-900 text-purple-300 border-purple-700';
       case 'social':
@@ -184,7 +184,7 @@ const Schedule: React.FC = () => {
   const getDotColor = (type: string) => {
     switch (type) {
       case 'work':
-        return 'bg-blue-500';
+        return 'bg-orange-500';
       case 'personal':
         return 'bg-purple-500';
       case 'social':
@@ -197,6 +197,33 @@ const Schedule: React.FC = () => {
   const getUniqueEventTypes = (events: ScheduleEvent[]) => {
     const types = new Set(events.map(event => event.type));
     return Array.from(types);
+  };
+
+  const getFilterButtonColor = (type: string, isActive: boolean) => {
+    if (!isActive) {
+      return theme === 'light'
+        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        : 'bg-gray-700 text-gray-300 hover:bg-gray-600';
+    }
+
+    switch (type) {
+      case 'work':
+        return theme === 'light'
+          ? 'bg-orange-100 text-orange-700 border border-orange-200'
+          : 'bg-orange-900 text-orange-300 border border-orange-700';
+      case 'personal':
+        return theme === 'light'
+          ? 'bg-purple-100 text-purple-700 border border-purple-200'
+          : 'bg-purple-900 text-purple-300 border border-purple-700';
+      case 'social':
+        return theme === 'light'
+          ? 'bg-green-100 text-green-700 border border-green-200'
+          : 'bg-green-900 text-green-300 border border-green-700';
+      default: // 'all'
+        return theme === 'light'
+          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+          : 'bg-blue-900 text-blue-300 border border-blue-700';
+    }
   };
 
   const handleCreateEvent = () => {
@@ -246,9 +273,7 @@ const Schedule: React.FC = () => {
                 key={type}
                 onClick={() => setFilterType(type)}
                 className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full capitalize transition-colors ${
-                  filterType === type
-                    ? `${theme === 'light' ? 'bg-blue-100 text-blue-700' : 'bg-blue-900 text-blue-300'}`
-                    : `${theme === 'light' ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`
+                  getFilterButtonColor(type, filterType === type)
                 }`}
               >
                 {type}

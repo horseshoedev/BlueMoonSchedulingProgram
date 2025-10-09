@@ -46,22 +46,28 @@ const Dashboard: React.FC = () => {
     }
   ];
 
-  const quickActions = [
-    {
-      title: 'View My Availability',
-      description: 'See your free and partially free days',
-      icon: <Calendar className="h-5 w-5 text-blue-600 mr-3" />,
-      action: () => setActiveTab('availability'),
-      color: 'blue'
-    },
-    {
-      title: 'Manage Groups',
-      description: 'Invite others and view shared availability',
-      icon: <Users className="h-5 w-5 text-purple-600 mr-3" />,
-      action: () => setActiveTab('groups'),
-      color: 'purple'
+  const joinedGroups = groups.filter(group => group.isJoined);
+
+  const getGroupTypeColor = (type: string) => {
+    switch (type) {
+      case 'work':
+        return theme === 'light'
+          ? 'bg-orange-100 text-orange-800 border border-orange-200'
+          : 'bg-orange-900 text-orange-300 border border-orange-700';
+      case 'personal':
+        return theme === 'light'
+          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+          : 'bg-purple-900 text-purple-300 border border-purple-700';
+      case 'social':
+        return theme === 'light'
+          ? 'bg-green-100 text-green-800 border border-green-200'
+          : 'bg-green-900 text-green-300 border border-green-700';
+      default:
+        return theme === 'light'
+          ? 'bg-gray-100 text-gray-800 border border-gray-200'
+          : 'bg-gray-700 text-gray-300 border border-gray-600';
     }
-  ];
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -122,26 +128,61 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {quickActions.map((action, index) => (
+      {/* My Groups */}
+      <div className={`${currentTheme.cardBg} border ${currentTheme.border} rounded-lg p-4`}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-base sm:text-lg font-semibold ${currentTheme.text}`}>
+            My Groups
+          </h3>
           <button
-            key={index}
-            onClick={action.action}
-            className={`flex items-center justify-between p-3 sm:p-4 ${currentTheme.cardBg} border ${currentTheme.border} rounded-lg ${currentTheme.hover} transition-colors`}
+            onClick={() => setActiveTab('groups')}
+            className="text-sm text-blue-600 hover:text-blue-700 flex items-center transition-colors"
           >
-            <div className="flex items-center min-w-0 flex-1">
-              <div className="flex-shrink-0">
-                {action.icon}
-              </div>
-              <div className="text-left min-w-0">
-                <p className={`font-medium ${currentTheme.text} text-sm sm:text-base`}>{action.title}</p>
-                <p className={`text-xs sm:text-sm ${currentTheme.textSecondary} truncate`}>{action.description}</p>
-              </div>
-            </div>
-            <ChevronRight className={`h-5 w-5 ${currentTheme.textMuted} flex-shrink-0 ml-2`} />
+            View All <ChevronRight className="h-4 w-4" />
           </button>
-        ))}
+        </div>
+
+        {joinedGroups.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {joinedGroups.map(group => (
+              <div
+                key={group.id}
+                onClick={() => setActiveTab('groups')}
+                className={`p-3 border ${currentTheme.border} rounded-lg ${currentTheme.hover} transition-shadow cursor-pointer`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className={`font-medium ${currentTheme.text} text-sm flex-1`}>{group.name}</h4>
+                  <span className={`px-2 py-0.5 text-xs rounded capitalize ${getGroupTypeColor(group.type)}`}>
+                    {group.type}
+                  </span>
+                </div>
+                <div className={`flex items-center gap-3 text-xs ${currentTheme.textSecondary}`}>
+                  <span className="flex items-center">
+                    <Users className="h-3 w-3 mr-1" />
+                    {group.members} members
+                  </span>
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {group.lastActive}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Users className={`h-12 w-12 mx-auto mb-3 ${currentTheme.textMuted} opacity-50`} />
+            <p className={`${currentTheme.textSecondary} mb-2`}>
+              You haven't joined any groups yet
+            </p>
+            <button
+              onClick={() => setActiveTab('groups')}
+              className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              Browse Groups
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
