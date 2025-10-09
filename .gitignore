@@ -42,6 +42,7 @@ CLAUDE.md
 .claude
 # Local Netlify folder
 .netlify
+
 # Set up guides
 AUTHENTICATION.md
 CALENDAR_OAUTH_SETUP.md
