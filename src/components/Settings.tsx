@@ -486,10 +486,10 @@ const Settings: React.FC = () => {
           <h3 className={`font-semibold mb-3 ${currentTheme.text}`}>Preferred Meeting Times</h3>
           <div className="space-y-2">
             {[
-              { key: 'morning', label: 'Morning (9-12)' },
-              { key: 'afternoon', label: 'Afternoon (12-17)' },
-              { key: 'evening', label: 'Evening (17-20)' }
-            ].map(({ key, label }) => (
+              { key: 'morning', label: 'Morning', start: '09:00', end: '12:00' },
+              { key: 'afternoon', label: 'Afternoon', start: '12:00', end: '17:00' },
+              { key: 'evening', label: 'Evening', start: '17:00', end: '20:00' }
+            ].map(({ key, label, start, end }) => (
               <label key={key} className="flex items-center">
                 <input
                   type="checkbox"
@@ -497,7 +497,9 @@ const Settings: React.FC = () => {
                   checked={user.preferences.preferredTimes.includes(key)}
                   onChange={(e) => handlePreferredTimeChange(key, e.target.checked)}
                 />
-                <span className={`text-sm ${currentTheme.text}`}>{label}</span>
+                <span className={`text-sm ${currentTheme.text}`}>
+                  {label} ({formatTime(start, user.preferences.timeFormat)} - {formatTime(end, user.preferences.timeFormat)})
+                </span>
               </label>
             ))}
           </div>

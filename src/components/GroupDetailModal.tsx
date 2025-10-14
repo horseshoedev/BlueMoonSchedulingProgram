@@ -76,7 +76,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'work':
-        return theme === 'light' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-blue-900 text-blue-300 border-blue-700';
+        return theme === 'light' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-orange-900 text-orange-300 border-orange-700';
       case 'personal':
         return theme === 'light' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-purple-900 text-purple-300 border-purple-700';
       case 'social':
