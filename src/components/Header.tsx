@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <button
             onClick={handleNotificationClick}
             className={`relative p-1 sm:p-2 rounded-full ${currentTheme.hover} transition-colors`}
-            title="View notifications"
+            aria-label={`View notifications${invitations.length > 0 ? ` (${invitations.length} pending)` : ''}`}
           >
             <Bell className={`h-5 w-5 ${currentTheme.textSecondary}`} />
             {invitations.length > 0 && (
@@ -73,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <button
               onClick={handleLogout}
               className={`flex items-center px-2 sm:px-3 py-1 rounded-md text-sm font-medium ${currentTheme.textSecondary} hover:${currentTheme.hover} transition-colors`}
-              title="Logout"
+              aria-label="Logout"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline ml-1">Logout</span>

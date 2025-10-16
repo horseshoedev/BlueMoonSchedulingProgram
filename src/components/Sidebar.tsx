@@ -49,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileMenuOpen, onClose }) => {
           <button
             onClick={onClose}
             className={`p-2 rounded-lg ${currentTheme.hover}`}
+            aria-label="Close menu"
           >
             <X className="h-5 w-5" />
           </button>

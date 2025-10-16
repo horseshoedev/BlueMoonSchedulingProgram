@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAppContext } from './hooks/useAppContext';
 import { themeClasses } from './utils/theme';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import Availability from './components/Availability';
-import Groups from './components/Groups';
-import Schedule from './components/Schedule';
-import Settings from './components/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy load route components for code splitting
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Availability = lazy(() => import('./components/Availability'));
+const Groups = lazy(() => import('./components/Groups'));
+const Schedule = lazy(() => import('./components/Schedule'));
+const Settings = lazy(() => import('./components/Settings'));
 
 const AppContent: React.FC = () => {
   const { activeTab, theme } = useAppContext();
@@ -41,7 +43,13 @@ const AppContent: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full min-h-[600px]">
           <Sidebar isMobileMenuOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
           <div className="flex-1 w-full">
-            {renderContent()}
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className={`text-lg ${currentTheme.text}`}>Loading...</div>
+              </div>
+            }>
+              {renderContent()}
+            </Suspense>
           </div>
         </div>
       </div>

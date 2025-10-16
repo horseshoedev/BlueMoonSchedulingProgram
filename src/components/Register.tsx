@@ -131,7 +131,7 @@ const Register: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <User className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
                   id="name"
@@ -153,7 +153,7 @@ const Register: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
                   id="email"
@@ -175,7 +175,7 @@ const Register: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
                   id="password"
@@ -191,8 +191,9 @@ const Register: React.FC = () => {
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                    className="text-gray-600 hover:text-gray-800 focus:outline-none"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -210,7 +211,7 @@ const Register: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
                   id="confirmPassword"
@@ -226,8 +227,9 @@ const Register: React.FC = () => {
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                    className="text-gray-600 hover:text-gray-800 focus:outline-none"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-5 w-5" />

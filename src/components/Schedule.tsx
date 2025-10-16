@@ -286,6 +286,7 @@ const Schedule: React.FC = () => {
           <button
             onClick={() => navigate('prev')}
             className={`p-2 rounded ${currentTheme.hover} transition-colors`}
+            aria-label={`Previous ${viewMode}`}
           >
             <ChevronLeft className={`h-4 w-4 ${currentTheme.textSecondary}`} />
           </button>
@@ -295,6 +296,7 @@ const Schedule: React.FC = () => {
           <button
             onClick={() => navigate('next')}
             className={`p-2 rounded ${currentTheme.hover} transition-colors`}
+            aria-label={`Next ${viewMode}`}
           >
             <ChevronRight className={`h-4 w-4 ${currentTheme.textSecondary}`} />
           </button>
