@@ -274,6 +274,7 @@ const Settings: React.FC = () => {
                   type="button"
                   onClick={handleOpenIconPicker}
                   className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+                  aria-label="Change profile picture"
                 >
                   <Camera className="h-4 w-4 text-white" />
                 </button>
@@ -337,7 +338,8 @@ const Settings: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handlePasswordToggle('current')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800"
+                  aria-label={showPasswords.current ? "Hide current password" : "Show current password"}
                 >
                   {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -359,7 +361,8 @@ const Settings: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handlePasswordToggle('new')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800"
+                  aria-label={showPasswords.new ? "Hide new password" : "Show new password"}
                 >
                   {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -381,7 +384,8 @@ const Settings: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handlePasswordToggle('confirm')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800"
+                  aria-label={showPasswords.confirm ? "Hide confirm password" : "Show confirm password"}
                 >
                   {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -620,6 +624,7 @@ const Settings: React.FC = () => {
               <button
                 onClick={() => setShowIconPicker(false)}
                 className={`p-1 rounded-full ${currentTheme.hover} transition-colors`}
+                aria-label="Close icon picker"
               >
                 <X className={`h-5 w-5 ${currentTheme.textSecondary}`} />
               </button>

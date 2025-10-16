@@ -191,7 +191,7 @@ const Groups: React.FC = () => {
                   <button
                     onClick={() => handleViewDetails(group)}
                     className={`flex-1 min-w-[80px] px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-purple-50 text-purple-600 hover:bg-purple-100' : 'bg-purple-900 text-purple-300 hover:bg-purple-800'} rounded flex items-center justify-center transition-colors text-sm whitespace-nowrap`}
-                    title="View group details"
+                    aria-label={`View ${group.name} details`}
                   >
                     <Eye className="h-4 w-4 sm:mr-1" />
                     <span className="hidden sm:inline">Details</span>
@@ -199,6 +199,7 @@ const Groups: React.FC = () => {
                   <button
                     onClick={() => handleScheduleMeeting(group.id, group.name)}
                     className={`flex-1 min-w-[80px] px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center transition-colors text-sm whitespace-nowrap`}
+                    aria-label={`Schedule meeting with ${group.name}`}
                   >
                     <Calendar className="h-4 w-4 sm:mr-1" />
                     <span className="hidden sm:inline">Schedule</span>
@@ -206,7 +207,7 @@ const Groups: React.FC = () => {
                   <button
                     onClick={() => handleShareGroup(group.name)}
                     className={`px-2 sm:px-3 py-2 min-w-[40px] ${theme === 'light' ? 'bg-gray-50 text-gray-600 hover:bg-gray-100' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} rounded transition-colors flex items-center justify-center whitespace-nowrap`}
-                    title="Share group"
+                    aria-label={`Share ${group.name}`}
                   >
                     <Share2 className="h-4 w-4" />
                   </button>

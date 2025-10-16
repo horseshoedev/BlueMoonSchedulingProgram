@@ -79,6 +79,7 @@ const Availability: React.FC = () => {
         <button
           className="w-full flex items-center justify-between mb-3"
           onClick={() => setFullyFreeOpen((open) => !open)}
+          aria-label={fullyFreeOpen ? "Collapse fully free days section" : "Expand fully free days section"}
         >
           <span className={`font-semibold ${theme === 'light' ? 'text-green-700' : 'text-green-400'} flex items-center`}>
             <CheckCircle className="h-4 w-4 mr-2" />
@@ -104,6 +105,7 @@ const Availability: React.FC = () => {
         <button
           className="w-full flex items-center justify-between mb-3"
           onClick={() => setPartiallyFreeOpen((open) => !open)}
+          aria-label={partiallyFreeOpen ? "Collapse partially available days section" : "Expand partially available days section"}
         >
           <span className={`font-semibold ${theme === 'light' ? 'text-blue-700' : 'text-blue-400'} flex items-center`}>
             <Circle className="h-4 w-4 mr-2" />
@@ -139,6 +141,7 @@ const Availability: React.FC = () => {
         <button
           className="w-full flex items-center justify-between mb-3"
           onClick={() => setRecurringOpen((open) => !open)}
+          aria-label={recurringOpen ? "Collapse recurring availability section" : "Expand recurring availability section"}
         >
           <span className={`font-semibold ${theme === 'light' ? 'text-purple-700' : 'text-purple-400'} flex items-center`}>
             <Clock className="h-4 w-4 mr-2" />

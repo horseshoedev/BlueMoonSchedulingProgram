@@ -22,9 +22,10 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
   onLeaveGroup
 }) => {
   const currentTheme = themeClasses[theme];
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'events'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'events' | 'options'>('overview');
   const [showScheduleDropdown, setShowScheduleDropdown] = useState(false);
   const [showProposalModal, setShowProposalModal] = useState(false);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
 
   // Mock data for group members - in a real app this would come from API
   const mockMembers = [
@@ -98,10 +99,19 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
   };
 
   const handleLeaveGroup = () => {
-    if (group && window.confirm(`Are you sure you want to leave ${group.name}?`)) {
+    setShowLeaveConfirmation(true);
+  };
+
+  const confirmLeaveGroup = () => {
+    if (group) {
       onLeaveGroup(group.id);
+      setShowLeaveConfirmation(false);
       onClose();
     }
+  };
+
+  const cancelLeaveGroup = () => {
+    setShowLeaveConfirmation(false);
   };
 
   const handleScheduleMeeting = () => {
@@ -164,11 +174,12 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
             {[
               { key: 'overview', label: 'Overview' },
               { key: 'members', label: 'Members' },
-              { key: 'events', label: 'Events' }
+              { key: 'events', label: 'Events' },
+              { key: 'options', label: 'Options' }
             ].map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as 'overview' | 'members' | 'events')}
+                onClick={() => setActiveTab(tab.key as 'overview' | 'members' | 'events' | 'options')}
                 className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
@@ -316,12 +327,39 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Upcoming Events</h3>
-                <button
-                  onClick={handleScheduleMeeting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                >
-                  Schedule New Event
-                </button>
+                {/* Schedule Meeting Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowScheduleDropdown(!showScheduleDropdown)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center text-sm"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Meeting
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </button>
+
+                  {showScheduleDropdown && (
+                    <div className={`absolute top-full mt-2 right-0 ${currentTheme.cardBg} border ${currentTheme.border} rounded-lg shadow-lg py-2 min-w-[200px] z-10`}>
+                      <button
+                        onClick={() => {
+                          setShowScheduleDropdown(false);
+                          handleScheduleMeeting();
+                        }}
+                        className={`w-full px-4 py-2 text-left ${currentTheme.text} ${currentTheme.hover} flex items-center`}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Schedule Now
+                      </button>
+                      <button
+                        onClick={handleProposeMeeting}
+                        className={`w-full px-4 py-2 text-left ${currentTheme.text} ${currentTheme.hover} flex items-center`}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Propose Time via Email
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -368,7 +406,9 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                     <Calendar className="h-8 w-8 mx-auto mb-3 opacity-50" />
                     <p>No upcoming events scheduled</p>
                     <button
-                      onClick={handleScheduleMeeting}
+                      onClick={() => {
+                        setShowScheduleDropdown(true);
+                      }}
                       className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
                     >
                       Schedule the first event
@@ -378,58 +418,33 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
               </div>
             </div>
           )}
-        </div>
 
-        {/* Footer Actions */}
-        <div className={`p-6 border-t ${currentTheme.border} flex justify-between`}>
-          <button
-            onClick={handleLeaveGroup}
-            className="px-4 py-2 text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
-          >
-            Leave Group
-          </button>
-          <div className="flex items-center space-x-3">
-            {/* Schedule Meeting Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowScheduleDropdown(!showScheduleDropdown)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Schedule Meeting
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </button>
+          {activeTab === 'options' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className={`text-lg font-semibold ${currentTheme.text} mb-3`}>Group Options</h3>
+                <p className={`text-sm ${currentTheme.textSecondary} mb-6`}>
+                  Manage your membership and group settings.
+                </p>
+              </div>
 
-              {showScheduleDropdown && (
-                <div className={`absolute bottom-full mb-2 right-0 ${currentTheme.cardBg} border ${currentTheme.border} rounded-lg shadow-lg py-2 min-w-[200px] z-10`}>
-                  <button
-                    onClick={() => {
-                      setShowScheduleDropdown(false);
-                      handleScheduleMeeting();
-                    }}
-                    className={`w-full px-4 py-2 text-left ${currentTheme.text} ${currentTheme.hover} flex items-center`}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Now
-                  </button>
-                  <button
-                    onClick={handleProposeMeeting}
-                    className={`w-full px-4 py-2 text-left ${currentTheme.text} ${currentTheme.hover} flex items-center`}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Propose Time via Email
-                  </button>
-                </div>
-              )}
+              {/* Leave Group Section */}
+              <div className={`p-4 border ${currentTheme.border} rounded-lg`}>
+                <h4 className={`font-medium ${currentTheme.text} mb-2`}>Leave Group</h4>
+                <p className={`text-sm ${currentTheme.textSecondary} mb-4`}>
+                  Remove yourself from this group. You will no longer have access to group events and will need to be re-invited to rejoin.
+                </p>
+                <button
+                  onClick={handleLeaveGroup}
+                  className="px-4 py-2 text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
+                >
+                  Leave Group
+                </button>
+              </div>
             </div>
-            <button
-              onClick={onClose}
-              className={`px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.text} ${currentTheme.hover} transition-colors`}
-            >
-              Close
-            </button>
-          </div>
+          )}
         </div>
+
 
         {/* Proposal Modal */}
         {group && (
@@ -443,6 +458,33 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
           />
         )}
       </div>
+
+      {/* Leave Group Confirmation Modal */}
+      {showLeaveConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className={`${currentTheme.cardBg} border ${currentTheme.border} rounded-lg w-full max-w-md p-6`}>
+            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Leave Group?</h3>
+            <p className={`${currentTheme.textSecondary} mb-6`}>
+              Are you sure you want to leave <span className={`font-semibold ${currentTheme.text}`}>{group?.name}</span>?
+              You will no longer have access to group events and will need to be re-invited to rejoin.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <button
+                onClick={cancelLeaveGroup}
+                className={`w-full sm:w-auto px-4 py-2 border ${currentTheme.border} rounded ${currentTheme.text} ${currentTheme.hover} transition-colors`}
+              >
+                No, Stay in Group
+              </button>
+              <button
+                onClick={confirmLeaveGroup}
+                className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Yes, Leave Group
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
