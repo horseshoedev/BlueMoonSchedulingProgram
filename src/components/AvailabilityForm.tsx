@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Repeat, Plus, Trash2 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
-import { AvailabilityDay, RecurringPattern } from '../types';
 
 interface AvailabilityFormProps {
   isOpen: boolean;
@@ -28,8 +25,6 @@ const AvailabilityForm: React.FC<AvailabilityFormProps> = ({
   onSuccess,
   theme
 }) => {
-  const { token } = useAuth();
-  const { user } = useAppContext();
   const currentTheme = themeClasses[theme];
 
   const [formData, setFormData] = useState<AvailabilityFormData>({
@@ -70,12 +65,6 @@ const AvailabilityForm: React.FC<AvailabilityFormProps> = ({
     { value: 'work', label: 'Work', color: 'blue' },
     { value: 'personal', label: 'Personal', color: 'purple' },
     { value: 'social', label: 'Social', color: 'green' }
-  ];
-
-  const recurringPatterns = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'custom', label: 'Custom Pattern' }
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

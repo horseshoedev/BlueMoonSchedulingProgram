@@ -1,5 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
+const expressStaticGzip = require('express-static-gzip');
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
@@ -31,6 +34,22 @@ const generalLimiter = rateLimit({
 });
 
 // Middleware
+// Enable gzip/brotli compression for all responses
+app.use(compression({
+  // Compression level (0-9, 6 is default, 9 is max)
+  level: 6,
+  // Only compress responses larger than this (in bytes)
+  threshold: 1024,
+  // Filter function to determine what to compress
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Compress all text-based responses
+    return compression.filter(req, res);
+  }
+}));
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use('/api/auth', authLimiter);
@@ -1624,7 +1643,27 @@ app.get('/api/meetings/proposals/:id/responses', authenticateToken, (req, res) =
   }
 });
 
+// Serve pre-compressed static files from the dist directory
+// This will automatically serve .br (Brotli) or .gz (gzip) files if available
+const distPath = path.join(__dirname, '..', 'dist');
+app.use('/', expressStaticGzip(distPath, {
+  enableBrotli: true,
+  orderPreference: ['br', 'gz'], // Prefer Brotli over gzip
+  serveStatic: {
+    maxAge: '1y', // Cache static assets for 1 year
+    setHeaders: (res, path) => {
+      // Set cache headers for static assets
+      if (path.endsWith('.html')) {
+        // Don't cache HTML files for long (SPA routing)
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }
+}));
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Compression enabled: gzip & brotli`);
+  console.log(`Serving static files from: ${distPath}`);
 });

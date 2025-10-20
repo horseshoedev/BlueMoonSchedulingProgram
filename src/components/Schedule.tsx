@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Calendar, Clock, Users, Plus, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 import { formatTimeSlot } from '../utils/time';
 import { ScheduleEvent } from '../types';
-import ScheduleForm from './ScheduleForm';
-import EventDetailModal from './EventDetailModal';
+
+// Lazy load modal components
+const ScheduleForm = lazy(() => import('./ScheduleForm'));
+const EventDetailModal = lazy(() => import('./EventDetailModal'));
 
 const Schedule: React.FC = () => {
   const { theme, user } = useAppContext();
@@ -578,21 +580,29 @@ const Schedule: React.FC = () => {
       </div>
 
       {/* Schedule Form Modal */}
-      <ScheduleForm
-        isOpen={showScheduleForm}
-        onClose={() => setShowScheduleForm(false)}
-        onSuccess={handleEventCreated}
-        theme={theme}
-      />
+      {showScheduleForm && (
+        <Suspense fallback={null}>
+          <ScheduleForm
+            isOpen={showScheduleForm}
+            onClose={() => setShowScheduleForm(false)}
+            onSuccess={handleEventCreated}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
       {/* Event Detail Modal */}
-      <EventDetailModal
-        isOpen={showEventModal}
-        onClose={handleCloseEventModal}
-        event={selectedEvent}
-        theme={theme}
-        timeFormat={user.preferences.timeFormat}
-      />
+      {showEventModal && (
+        <Suspense fallback={null}>
+          <EventDetailModal
+            isOpen={showEventModal}
+            onClose={handleCloseEventModal}
+            event={selectedEvent}
+            theme={theme}
+            timeFormat={user.preferences.timeFormat}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

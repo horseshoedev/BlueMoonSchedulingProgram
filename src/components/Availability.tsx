@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Plus, CheckCircle, Circle, Clock, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 import { formatTimeSlot } from '../utils/time';
-import AvailabilityForm from './AvailabilityForm';
+
+// Lazy load form component
+const AvailabilityForm = lazy(() => import('./AvailabilityForm'));
 
 const Availability: React.FC = () => {
-  const { availabilityData, user, theme, addAvailabilityBlock } = useAppContext();
+  const { availabilityData, user, theme } = useAppContext();
   const currentTheme = themeClasses[theme];
 
   // Collapsible state
@@ -169,12 +171,16 @@ const Availability: React.FC = () => {
       </div>
 
       {/* Availability Form Modal */}
-      <AvailabilityForm
-        isOpen={showAvailabilityForm}
-        onClose={() => setShowAvailabilityForm(false)}
-        onSuccess={handleAvailabilityAdded}
-        theme={theme}
-      />
+      {showAvailabilityForm && (
+        <Suspense fallback={null}>
+          <AvailabilityForm
+            isOpen={showAvailabilityForm}
+            onClose={() => setShowAvailabilityForm(false)}
+            onSuccess={handleAvailabilityAdded}
+            theme={theme}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

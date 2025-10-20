@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, Users, MapPin, Repeat } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { X, Calendar } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
 import { ScheduleEvent, ScheduleMeetingData } from '../types';
@@ -22,7 +21,6 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
   groupId,
   groupName
 }) => {
-  const { token } = useAuth();
   const { groups, user } = useAppContext();
   const currentTheme = themeClasses[theme];
 

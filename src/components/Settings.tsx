@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { useAuth } from '../hooks/useAuth';
 import { themeClasses } from '../utils/theme';
 import { formatTime } from '../utils/time';
 import { User, Mail, Lock, Camera, Save, Eye, EyeOff, X, RefreshCw } from 'lucide-react';
 import ProfilePicture from './ProfilePicture';
-import CalendarSyncModal from './CalendarSyncModal';
 import { googleCalendarService, iCalService, getAllIntegrations } from '../services/calendar';
 import { CalendarIntegration } from '../types';
+
+// Lazy load calendar modal
+const CalendarSyncModal = lazy(() => import('./CalendarSyncModal'));
 
 const Settings: React.FC = () => {
   const { user, setUser, theme, setTheme } = useAppContext();
@@ -666,12 +668,16 @@ const Settings: React.FC = () => {
       )}
 
       {/* iCal Connection Modal */}
-      <CalendarSyncModal
-        isOpen={showICalModal}
-        onClose={() => setShowICalModal(false)}
-        onConnect={handleConnectICal}
-        theme={theme}
-      />
+      {showICalModal && (
+        <Suspense fallback={null}>
+          <CalendarSyncModal
+            isOpen={showICalModal}
+            onClose={() => setShowICalModal(false)}
+            onConnect={handleConnectICal}
+            theme={theme}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

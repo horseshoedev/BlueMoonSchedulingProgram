@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { Plus, Users, Clock, Calendar, Share2, UserPlus, UserMinus, Filter, Eye } from 'lucide-react';
+import React, { useState, lazy, Suspense } from 'react';
+import { Plus, Users, Clock, Calendar, Share2, UserPlus, Filter, Eye } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
-import GroupForm from './GroupForm';
-import GroupDetailModal from './GroupDetailModal';
 import { Group } from '../types';
+
+// Lazy load modal components
+const GroupForm = lazy(() => import('./GroupForm'));
+const GroupDetailModal = lazy(() => import('./GroupDetailModal'));
 
 const Groups: React.FC = () => {
   const { groups, theme, joinGroup, leaveGroup, addGroup, setActiveTab } = useAppContext();
@@ -219,22 +221,30 @@ const Groups: React.FC = () => {
       </div>
 
       {/* Group Creation Form Modal */}
-      <GroupForm
-        isOpen={showGroupForm}
-        onClose={() => setShowGroupForm(false)}
-        onSuccess={handleGroupCreated}
-        theme={theme}
-      />
+      {showGroupForm && (
+        <Suspense fallback={null}>
+          <GroupForm
+            isOpen={showGroupForm}
+            onClose={() => setShowGroupForm(false)}
+            onSuccess={handleGroupCreated}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
       {/* Group Detail Modal */}
-      <GroupDetailModal
-        isOpen={showGroupDetail}
-        onClose={handleCloseGroupDetail}
-        group={selectedGroup}
-        theme={theme}
-        onScheduleMeeting={handleScheduleMeeting}
-        onLeaveGroup={leaveGroup}
-      />
+      {showGroupDetail && (
+        <Suspense fallback={null}>
+          <GroupDetailModal
+            isOpen={showGroupDetail}
+            onClose={handleCloseGroupDetail}
+            group={selectedGroup}
+            theme={theme}
+            onScheduleMeeting={handleScheduleMeeting}
+            onLeaveGroup={leaveGroup}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
