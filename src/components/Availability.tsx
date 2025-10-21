@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useMemo, useCallback } from 'react';
 import { Plus, CheckCircle, Circle, Clock, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
@@ -22,22 +22,22 @@ const Availability: React.FC = () => {
   // Form state
   const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedFilter(e.target.value);
-  };
+  }, []);
 
-  const handleAddBlock = () => {
+  const handleAddBlock = useCallback(() => {
     setShowAvailabilityForm(true);
-  };
+  }, []);
 
-  const handleAvailabilityAdded = () => {
+  const handleAvailabilityAdded = useCallback(() => {
     // In a real app, this would refresh the availability data from the context/API
     console.log('Availability block added successfully');
     setShowAvailabilityForm(false);
-  };
+  }, []);
 
   // Filter availability data based on selected event type
-  const getFilteredData = () => {
+  const filteredData = useMemo(() => {
     if (selectedFilter === 'all') {
       return availabilityData;
     }
@@ -47,9 +47,7 @@ const Availability: React.FC = () => {
       partiallyFree: availabilityData.partiallyFree.filter(day => day.eventType === selectedFilter),
       recurring: availabilityData.recurring.filter(pattern => pattern.type === selectedFilter)
     };
-  };
-
-  const filteredData = getFilteredData();
+  }, [selectedFilter, availabilityData]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -185,4 +183,4 @@ const Availability: React.FC = () => {
   );
 };
 
-export default Availability;
+export default React.memo(Availability);

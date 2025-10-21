@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useMemo, useCallback } from 'react';
 import { Plus, Users, Clock, Calendar, Share2, UserPlus, Filter, Eye } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
@@ -16,21 +16,21 @@ const Groups: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [showGroupDetail, setShowGroupDetail] = useState(false);
 
-  const handleJoinLeave = (groupId: number | string, isJoined: boolean) => {
+  const handleJoinLeave = useCallback((groupId: number | string, isJoined: boolean) => {
     if (isJoined) {
       leaveGroup(groupId);
     } else {
       joinGroup(groupId);
     }
-  };
+  }, [joinGroup, leaveGroup]);
 
-  const filteredGroups = groups.filter(group => 
+  const filteredGroups = useMemo(() => groups.filter(group =>
     filterType === 'all' || group.type === filterType
-  );
+  ), [groups, filterType]);
 
-  const groupTypes = ['all', 'work', 'personal', 'social'];
+  const groupTypes = useMemo(() => ['all', 'work', 'personal', 'social'], []);
 
-  const getGroupTypeColor = (type: string) => {
+  const getGroupTypeColor = useCallback((type: string) => {
     switch (type) {
       case 'work':
         return theme === 'light'
@@ -49,9 +49,9 @@ const Groups: React.FC = () => {
           ? 'bg-gray-100 text-gray-800 border border-gray-200'
           : 'bg-gray-700 text-gray-300 border border-gray-600';
     }
-  };
+  }, [theme]);
 
-  const getFilterButtonColor = (type: string, isActive: boolean) => {
+  const getFilterButtonColor = useCallback((type: string, isActive: boolean) => {
     if (!isActive) {
       return theme === 'light'
         ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -76,37 +76,37 @@ const Groups: React.FC = () => {
           ? 'bg-blue-100 text-blue-700 border border-blue-200'
           : 'bg-blue-900 text-blue-300 border border-blue-700';
     }
-  };
+  }, [theme]);
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = useCallback(() => {
     setShowGroupForm(true);
-  };
+  }, []);
 
-  const handleGroupCreated = (group: Group) => {
+  const handleGroupCreated = useCallback((group: Group) => {
     addGroup(group);
-  };
+  }, [addGroup]);
 
-  const handleScheduleMeeting = (_groupId: number | string, _groupName: string) => {
+  const handleScheduleMeeting = useCallback(() => {
     // Navigate to schedule tab and open scheduling form for this group
     setActiveTab('schedule');
     // In a more complex implementation, we could pass group data via context or state
     // For now, we'll just navigate to the schedule tab where users can create events
-  };
+  }, [setActiveTab]);
 
-  const handleShareGroup = (groupName: string) => {
+  const handleShareGroup = useCallback((groupName: string) => {
     // For now, just show an alert - this would open a sharing interface
     alert(`Share ${groupName} - this would open a sharing interface or copy invite link`);
-  };
+  }, []);
 
-  const handleViewDetails = (group: Group) => {
+  const handleViewDetails = useCallback((group: Group) => {
     setSelectedGroup(group);
     setShowGroupDetail(true);
-  };
+  }, []);
 
-  const handleCloseGroupDetail = () => {
+  const handleCloseGroupDetail = useCallback(() => {
     setShowGroupDetail(false);
     setSelectedGroup(null);
-  };
+  }, []);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -199,7 +199,7 @@ const Groups: React.FC = () => {
                     <span className="hidden sm:inline">Details</span>
                   </button>
                   <button
-                    onClick={() => handleScheduleMeeting(group.id, group.name)}
+                    onClick={() => handleScheduleMeeting()}
                     className={`flex-1 min-w-[80px] px-2 sm:px-3 py-2 ${theme === 'light' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'} rounded flex items-center justify-center transition-colors text-sm whitespace-nowrap`}
                     aria-label={`Schedule meeting with ${group.name}`}
                   >
@@ -249,4 +249,4 @@ const Groups: React.FC = () => {
   );
 };
 
-export default Groups; 
+export default React.memo(Groups); 

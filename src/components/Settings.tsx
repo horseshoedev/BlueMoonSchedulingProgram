@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { useAuth } from '../hooks/useAuth';
 import { themeClasses } from '../utils/theme';
@@ -6,7 +6,7 @@ import { formatTime } from '../utils/time';
 import { User, Mail, Lock, Camera, Save, Eye, EyeOff, X, RefreshCw } from 'lucide-react';
 import ProfilePicture from './ProfilePicture';
 import { googleCalendarService, iCalService, getAllIntegrations } from '../services/calendar';
-import { CalendarIntegration } from '../types';
+import { CalendarIntegration, iCalConfig } from '../types';
 
 // Lazy load calendar modal
 const CalendarSyncModal = lazy(() => import('./CalendarSyncModal'));
@@ -17,13 +17,13 @@ const Settings: React.FC = () => {
   const currentTheme = themeClasses[theme];
   
   // Available user icons
-  const userIcons = [
+  const userIcons = useMemo(() => [
     { name: 'Sol', path: '/images/userIcons/solUserIcon.png' },
     { name: 'Mercury', path: '/images/userIcons/mercuryUserIcon.png' },
     { name: 'Mars', path: '/images/userIcons/marsUserIcon.png' },
     { name: 'Jupiter', path: '/images/userIcons/jupiterUserIcon.png' },
     { name: 'Saturn', path: '/images/userIcons/saturnUserIcon.png' }
-  ];
+  ], []);
 
   // Profile state
   const [profileData, setProfileData] = useState({
@@ -50,33 +50,33 @@ const Settings: React.FC = () => {
   const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);
   const [calendarError, setCalendarError] = useState<string | null>(null);
 
-  const handleProfileChange = (field: string, value: string) => {
+  const handleProfileChange = useCallback((field: string, value: string) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
-  const handlePasswordToggle = (field: 'current' | 'new' | 'confirm') => {
+  const handlePasswordToggle = useCallback((field: 'current' | 'new' | 'confirm') => {
     setShowPasswords(prev => ({
       ...prev,
       [field]: !prev[field]
     }));
-  };
+  }, []);
 
-  const handleIconSelect = (iconPath: string) => {
+  const handleIconSelect = useCallback((iconPath: string) => {
     setUser({
       ...user,
       profileIcon: iconPath
     });
     setShowIconPicker(false);
-  };
+  }, [user, setUser]);
 
-  const handleOpenIconPicker = () => {
+  const handleOpenIconPicker = useCallback(() => {
     setShowIconPicker(true);
-  };
+  }, []);
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
+  const handleProfileUpdate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
     setMessage(null);
@@ -117,16 +117,16 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  };
+  }, [profileData, user, setUser]);
 
-  const handleTimeFormatChange = (timeFormat: '12' | '24') => {
+  const handleTimeFormatChange = useCallback((timeFormat: '12' | '24') => {
     setUser({
       ...user,
       preferences: { ...user.preferences, timeFormat }
     });
-  };
+  }, [user, setUser]);
 
-  const handleWorkingHoursChange = (field: 'start' | 'end', value: string) => {
+  const handleWorkingHoursChange = useCallback((field: 'start' | 'end', value: string) => {
     setUser({
       ...user,
       preferences: {
@@ -137,9 +137,9 @@ const Settings: React.FC = () => {
         }
       }
     });
-  };
+  }, [user, setUser]);
 
-  const handlePreferredTimeChange = (timeSlot: string, checked: boolean) => {
+  const handlePreferredTimeChange = useCallback((timeSlot: string, checked: boolean) => {
     const currentTimes = user.preferences.preferredTimes;
     let newTimes;
 
@@ -156,12 +156,27 @@ const Settings: React.FC = () => {
         preferredTimes: newTimes
       }
     });
-  };
+  }, [user, setUser]);
+
+  const loadCalendarIntegrations = useCallback(async () => {
+    setIsLoadingCalendars(true);
+    setCalendarError(null);
+
+    try {
+      const integrations = await getAllIntegrations();
+      setCalendarIntegrations(integrations);
+    } catch (error) {
+      console.error('Failed to load calendar integrations:', error);
+      setCalendarError('Failed to load calendar integrations');
+    } finally {
+      setIsLoadingCalendars(false);
+    }
+  }, []);
 
   // Load calendar integrations on mount
   useEffect(() => {
     loadCalendarIntegrations();
-  }, []);
+  }, [loadCalendarIntegrations]);
 
   // Listen for OAuth popup messages
   useEffect(() => {
@@ -176,24 +191,9 @@ const Settings: React.FC = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [loadCalendarIntegrations]);
 
-  const loadCalendarIntegrations = async () => {
-    setIsLoadingCalendars(true);
-    setCalendarError(null);
-
-    try {
-      const integrations = await getAllIntegrations();
-      setCalendarIntegrations(integrations);
-    } catch (error) {
-      console.error('Failed to load calendar integrations:', error);
-      setCalendarError('Failed to load calendar integrations');
-    } finally {
-      setIsLoadingCalendars(false);
-    }
-  };
-
-  const handleConnectGoogle = async () => {
+  const handleConnectGoogle = useCallback(async () => {
     try {
       setCalendarError(null);
       const authUrl = await googleCalendarService.getAuthUrl();
@@ -212,9 +212,9 @@ const Settings: React.FC = () => {
     } catch (error) {
       setCalendarError(error instanceof Error ? error.message : 'Failed to initiate Google OAuth');
     }
-  };
+  }, []);
 
-  const handleDisconnectGoogle = async () => {
+  const handleDisconnectGoogle = useCallback(async () => {
     try {
       setCalendarError(null);
       await googleCalendarService.disconnect();
@@ -223,20 +223,16 @@ const Settings: React.FC = () => {
     } catch (error) {
       setCalendarError(error instanceof Error ? error.message : 'Failed to disconnect Google Calendar');
     }
-  };
+  }, [loadCalendarIntegrations]);
 
-  const handleConnectICal = async (config: any) => {
-    try {
-      setCalendarError(null);
-      await iCalService.connect(config);
-      await loadCalendarIntegrations();
-      setMessage({ type: 'success', text: 'iCal calendar connected successfully!' });
-    } catch (error) {
-      throw error; // Re-throw to be caught by modal
-    }
-  };
+  const handleConnectICal = useCallback(async (config: iCalConfig) => {
+    setCalendarError(null);
+    await iCalService.connect(config);
+    await loadCalendarIntegrations();
+    setMessage({ type: 'success', text: 'iCal calendar connected successfully!' });
+  }, [loadCalendarIntegrations]);
 
-  const handleDisconnectICal = async () => {
+  const handleDisconnectICal = useCallback(async () => {
     try {
       setCalendarError(null);
       await iCalService.disconnect();
@@ -245,10 +241,10 @@ const Settings: React.FC = () => {
     } catch (error) {
       setCalendarError(error instanceof Error ? error.message : 'Failed to disconnect iCal calendar');
     }
-  };
+  }, [loadCalendarIntegrations]);
 
-  const googleIntegration = calendarIntegrations.find(ci => ci.provider === 'google');
-  const iCalIntegration = calendarIntegrations.find(ci => ci.provider === 'ical');
+  const googleIntegration = useMemo(() => calendarIntegrations.find(ci => ci.provider === 'google'), [calendarIntegrations]);
+  const iCalIntegration = useMemo(() => calendarIntegrations.find(ci => ci.provider === 'ical'), [calendarIntegrations]);
 
   return (
     <div className="space-y-6">
@@ -682,4 +678,4 @@ const Settings: React.FC = () => {
   );
 };
 
-export default Settings; 
+export default React.memo(Settings); 

@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useMemo, useCallback } from 'react';
 import { Calendar, Clock, Users, Plus, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
@@ -76,13 +76,17 @@ const Schedule: React.FC = () => {
     }
   ]);
 
-  const eventTypes = ['all', 'work', 'personal', 'social'];
+  const eventTypes = useMemo(() => ['all', 'work', 'personal', 'social'], []);
 
-  const filteredEvents = scheduleEvents.filter(event =>
+  const filteredEvents = useMemo(() => scheduleEvents.filter(event =>
     filterType === 'all' || event.type === filterType
-  );
+  ), [scheduleEvents, filterType]);
 
-  const getWeekDates = () => {
+  const formatDate = useCallback((date: Date) => {
+    return date.toISOString().split('T')[0];
+  }, []);
+
+  const getWeekDates = useMemo(() => {
     const startOfWeek = new Date(currentDate);
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day;
@@ -95,42 +99,26 @@ const Schedule: React.FC = () => {
       weekDates.push(date);
     }
     return weekDates;
-  };
+  }, [currentDate]);
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
-
-  const getEventsForDate = (date: Date) => {
+  const getEventsForDate = useCallback((date: Date) => {
     const dateString = formatDate(date);
     return filteredEvents.filter(event => event.date === dateString);
-  };
+  }, [filteredEvents, formatDate]);
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
+  const navigate = useCallback((direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    if (viewMode === 'day') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
+    } else if (viewMode === 'week') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    } else {
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    }
     setCurrentDate(newDate);
-  };
+  }, [currentDate, viewMode]);
 
-  const navigateDay = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
-    setCurrentDate(newDate);
-  };
-
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
-    setCurrentDate(newDate);
-  };
-
-  const navigate = (direction: 'prev' | 'next') => {
-    if (viewMode === 'day') navigateDay(direction);
-    else if (viewMode === 'week') navigateWeek(direction);
-    else navigateMonth(direction);
-  };
-
-  const getMonthDates = () => {
+  const getMonthDates = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
@@ -153,9 +141,9 @@ const Schedule: React.FC = () => {
     }
 
     return dates;
-  };
+  }, [currentDate]);
 
-  const getDisplayDateRange = () => {
+  const getDisplayDateRange = useMemo(() => {
     if (viewMode === 'day') {
       return currentDate.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -168,9 +156,9 @@ const Schedule: React.FC = () => {
     } else {
       return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
-  };
+  }, [viewMode, currentDate]);
 
-  const getEventTypeColor = (type: string) => {
+  const getEventTypeColor = useCallback((type: string) => {
     switch (type) {
       case 'work':
         return theme === 'light' ? 'bg-orange-100 text-orange-800 border-orange-200' : 'bg-orange-900 text-orange-300 border-orange-700';
@@ -181,9 +169,9 @@ const Schedule: React.FC = () => {
       default:
         return theme === 'light' ? 'bg-gray-100 text-gray-800 border-gray-200' : 'bg-gray-700 text-gray-300 border-gray-600';
     }
-  };
+  }, [theme]);
 
-  const getDotColor = (type: string) => {
+  const getDotColor = useCallback((type: string) => {
     switch (type) {
       case 'work':
         return 'bg-orange-500';
@@ -194,14 +182,14 @@ const Schedule: React.FC = () => {
       default:
         return 'bg-gray-500';
     }
-  };
+  }, []);
 
-  const getUniqueEventTypes = (events: ScheduleEvent[]) => {
+  const getUniqueEventTypes = useCallback((events: ScheduleEvent[]) => {
     const types = new Set(events.map(event => event.type));
     return Array.from(types);
-  };
+  }, []);
 
-  const getFilterButtonColor = (type: string, isActive: boolean) => {
+  const getFilterButtonColor = useCallback((type: string, isActive: boolean) => {
     if (!isActive) {
       return theme === 'light'
         ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -226,27 +214,27 @@ const Schedule: React.FC = () => {
           ? 'bg-blue-100 text-blue-700 border border-blue-200'
           : 'bg-blue-900 text-blue-300 border border-blue-700';
     }
-  };
+  }, [theme]);
 
-  const handleCreateEvent = () => {
+  const handleCreateEvent = useCallback(() => {
     setShowScheduleForm(true);
-  };
+  }, []);
 
-  const handleEventCreated = (event: ScheduleEvent) => {
+  const handleEventCreated = useCallback((event: ScheduleEvent) => {
     // In a real app, this would update the context/state
     console.log('Event created:', event);
     setShowScheduleForm(false);
-  };
+  }, []);
 
-  const handleEventClick = (event: ScheduleEvent) => {
+  const handleEventClick = useCallback((event: ScheduleEvent) => {
     setSelectedEvent(event);
     setShowEventModal(true);
-  };
+  }, []);
 
-  const handleCloseEventModal = () => {
+  const handleCloseEventModal = useCallback(() => {
     setShowEventModal(false);
     setSelectedEvent(null);
-  };
+  }, []);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -293,7 +281,7 @@ const Schedule: React.FC = () => {
             <ChevronLeft className={`h-4 w-4 ${currentTheme.textSecondary}`} />
           </button>
           <span className={`text-xs sm:text-sm font-medium ${currentTheme.text} min-w-[140px] sm:min-w-[180px] text-center`}>
-            {getDisplayDateRange()}
+            {getDisplayDateRange}
           </span>
           <button
             onClick={() => navigate('next')}
@@ -400,7 +388,7 @@ const Schedule: React.FC = () => {
       {viewMode === 'week' && (
         <div className={`${currentTheme.cardBg} border ${currentTheme.border} rounded-lg overflow-x-auto`}>
           <div className="grid grid-cols-7 border-b ${currentTheme.border} min-w-[700px]">
-            {getWeekDates().map((date, index) => {
+            {getWeekDates.map((date, index) => {
               const isToday = formatDate(date) === formatDate(new Date());
               const dayEvents = getEventsForDate(date);
 
@@ -471,7 +459,7 @@ const Schedule: React.FC = () => {
 
           {/* Calendar grid */}
           <div className="grid grid-cols-7">
-            {getMonthDates().map((date, index) => {
+            {getMonthDates.map((date, index) => {
               if (!date) {
                 return <div key={`empty-${index}`} className={`min-h-[80px] sm:min-h-[100px] border-r border-b ${currentTheme.border} last:border-r-0`}></div>;
               }
@@ -607,4 +595,4 @@ const Schedule: React.FC = () => {
   );
 };
 
-export default Schedule;
+export default React.memo(Schedule);

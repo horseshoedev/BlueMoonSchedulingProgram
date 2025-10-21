@@ -1,5 +1,5 @@
-import React, { createContext, useState, ReactNode, useEffect } from 'react';
-import { User, AvailabilityData, Invitation, Group, TabType } from '../types';
+import React, { createContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import { User, AvailabilityData, Invitation, Group, TabType, AvailabilityDay, RecurringPattern } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { AppContextType } from './AppContextTypes';
 
@@ -79,7 +79,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     { id: 10, name: 'Cooking Club', members: 10, type: 'social', lastActive: '5 days ago', isJoined: false, description: 'Cooking classes and recipe sharing' }
   ]);
 
-  const joinGroup = (groupId: number | string) => {
+  const joinGroup = useCallback((groupId: number | string) => {
     setGroups(prevGroups =>
       prevGroups.map(group =>
         group.id === groupId
@@ -87,13 +87,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           : group
       )
     );
-  };
+  }, []);
 
-  const addGroup = (group: Group) => {
+  const addGroup = useCallback((group: Group) => {
     setGroups(prevGroups => [...prevGroups, { ...group, isJoined: true }]);
-  };
+  }, []);
 
-  const leaveGroup = (groupId: number | string) => {
+  const leaveGroup = useCallback((groupId: number | string) => {
     setGroups(prevGroups =>
       prevGroups.map(group =>
         group.id === groupId
@@ -101,25 +101,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           : group
       )
     );
-  };
+  }, []);
 
-  const addAvailabilityBlock = (type: 'fullyFree' | 'partiallyFree' | 'recurring', data: any) => {
+  const addAvailabilityBlock = useCallback((type: 'fullyFree' | 'partiallyFree' | 'recurring', data: AvailabilityDay | RecurringPattern) => {
     setAvailabilityData(prev => {
       const updated = { ...prev };
 
-      if (type === 'fullyFree') {
-        updated.fullyFree = [...prev.fullyFree, data];
-      } else if (type === 'partiallyFree') {
-        updated.partiallyFree = [...prev.partiallyFree, data];
-      } else if (type === 'recurring') {
-        updated.recurring = [...prev.recurring, data];
+      if (type === 'fullyFree' && 'date' in data) {
+        updated.fullyFree = [...prev.fullyFree, data as AvailabilityDay];
+      } else if (type === 'partiallyFree' && 'date' in data) {
+        updated.partiallyFree = [...prev.partiallyFree, data as AvailabilityDay];
+      } else if (type === 'recurring' && 'pattern' in data) {
+        updated.recurring = [...prev.recurring, data as RecurringPattern];
       }
 
       return updated;
     });
-  };
+  }, []);
 
-  const value: AppContextType = {
+  const value: AppContextType = useMemo(() => ({
     activeTab,
     setActiveTab,
     theme,
@@ -136,7 +136,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     addGroup,
     joinGroup,
     leaveGroup
-  };
+  }), [
+    activeTab,
+    theme,
+    user,
+    availabilityData,
+    invitations,
+    groups,
+    addAvailabilityBlock,
+    addGroup,
+    joinGroup,
+    leaveGroup
+  ]);
 
   return (
     <AppContext.Provider value={value}>
