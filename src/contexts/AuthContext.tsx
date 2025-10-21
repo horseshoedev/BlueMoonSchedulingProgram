@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { AuthContextType, AuthUser, LoginCredentials, RegisterCredentials, AuthResponse } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<void> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<void> => {
     try {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const data: AuthResponse = await response.json();
-      
+
       setUser(data.user);
       setToken(data.token);
       localStorage.setItem('authToken', data.token);
@@ -54,9 +54,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const register = async (credentials: RegisterCredentials): Promise<void> => {
+  const register = useCallback(async (credentials: RegisterCredentials): Promise<void> => {
     try {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -84,9 +84,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const registerOnly = async (credentials: RegisterCredentials): Promise<void> => {
+  const registerOnly = useCallback(async (credentials: RegisterCredentials): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
@@ -107,18 +107,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Registration error:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const logout = (): void => {
+  const logout = useCallback((): void => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('authToken');
     localStorage.removeItem('authUser');
-  };
+  }, []);
 
   const isAuthenticated = !!user && !!token;
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     token,
     isLoading,
@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     registerOnly,
     logout,
     isAuthenticated,
-  };
+  }), [user, token, isLoading, login, register, registerOnly, logout, isAuthenticated]);
 
   return (
     <AuthContext.Provider value={value}>

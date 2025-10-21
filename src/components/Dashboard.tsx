@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Calendar, Clock, Users, Bell, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../hooks/useAppContext';
 import { themeClasses } from '../utils/theme';
@@ -7,7 +7,7 @@ const Dashboard: React.FC = () => {
   const { availabilityData, groups, invitations, setInvitations, setActiveTab, theme, joinGroup } = useAppContext();
   const currentTheme = themeClasses[theme];
 
-  const handleAcceptInvitation = (invitationId: number) => {
+  const handleAcceptInvitation = useCallback((invitationId: number) => {
     const invitation = invitations.find(inv => inv.id === invitationId);
     if (invitation) {
       // Find the group by name and join it
@@ -18,14 +18,14 @@ const Dashboard: React.FC = () => {
       // Remove the invitation from the list
       setInvitations(invitations.filter(inv => inv.id !== invitationId));
     }
-  };
+  }, [invitations, groups, joinGroup, setInvitations]);
 
-  const handleDeclineInvitation = (invitationId: number) => {
+  const handleDeclineInvitation = useCallback((invitationId: number) => {
     // Remove the invitation from the list
     setInvitations(invitations.filter(inv => inv.id !== invitationId));
-  };
+  }, [invitations, setInvitations]);
 
-  const stats = [
+  const stats = useMemo(() => [
     {
       label: 'Fully Free Days',
       value: availabilityData.fullyFree.length,
@@ -44,11 +44,11 @@ const Dashboard: React.FC = () => {
       icon: <Users className="h-8 w-8 text-purple-600" />,
       color: 'purple'
     }
-  ];
+  ], [availabilityData.fullyFree.length, availabilityData.partiallyFree.length, groups.length]);
 
-  const joinedGroups = groups.filter(group => group.isJoined);
+  const joinedGroups = useMemo(() => groups.filter(group => group.isJoined), [groups]);
 
-  const getGroupTypeColor = (type: string) => {
+  const getGroupTypeColor = useCallback((type: string) => {
     switch (type) {
       case 'work':
         return theme === 'light'
@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
           ? 'bg-gray-100 text-gray-800 border border-gray-200'
           : 'bg-gray-700 text-gray-300 border border-gray-600';
     }
-  };
+  }, [theme]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -188,4 +188,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default React.memo(Dashboard); 
