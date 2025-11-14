@@ -1,0 +1,52 @@
+{
+  "name": "blue-moon-scheduler-server",
+  "version": "1.0.0",
+  "description": "Backend server for Blue Moon Scheduler",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "migrate:up": "node db/migrate.js up",
+    "migrate:down": "node db/migrate.js down",
+    "migrate:create": "node db/migrate.js create",
+    "db:seed": "node db/seed.js",
+    "db:reset": "node db/migrate.js down && node db/migrate.js up && node db/seed.js",
+    "db:setup": "node db/migrate.js up && node db/seed.js",
+    "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
+    "test:watch": "NODE_ENV=test jest --watch --runInBand",
+    "test:coverage": "NODE_ENV=test jest --coverage --runInBand",
+    "test:setup": "NODE_ENV=test node db/migrate.js up && NODE_ENV=test node db/seed.js"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "express-static-gzip": "^3.0.0",
+    "express-validator": "^6.15.0",
+    "googleapis": "^161.0.0",
+    "ical.js": "^2.2.1",
+    "jsonwebtoken": "^9.0.0",
+    "node-pg-migrate": "^6.2.2",
+    "nodemailer": "^7.0.9",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^7.1.4",
+    "vite-plugin-compression": "^0.5.1"
+  },
+  "keywords": [
+    "express",
+    "jwt",
+    "authentication",
+    "scheduler"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
